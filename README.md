@@ -3,10 +3,10 @@
 It's a command line interface to [plotnine](https://plotnine.readthedocs.io/en/stable/), which is a Python adaptation of [ggplot2](https://ggplot2.tidyverse.org/). It won't let you do anything that you couldn't do with a simple python script. But it might be more convenient than writing one of those.
 
 ```
-usage: p9 [-h] [--dataset DATASET | --input INPUT] [--geom GEOM [GEOM ...]]
-          [--stat STAT [STAT ...]] [--scale SCALE [SCALE ...]]
-          [--facet FACET [FACET ...]] [--xlab XLAB] [--ylab YLAB]
-          [--title TITLE]
+usage: p9 [-h] [--dataset DATASET | --input INPUT] [--geom GEOM [ARG=VAL ...]]
+          [--stat STAT [ARG=VAL ...]] [--scale SCALE=TYPE [ARG=VAL ...]]
+          [--facet TYPE [ARG=VAL ...]] [--theme [NAME] [ARG=VAL ...]]
+          [--xlab XLAB] [--ylab YLAB] [--title TITLE]
           [aes [aes ...]]
 
 positional arguments:
@@ -16,10 +16,11 @@ optional arguments:
   -h, --help            show this help message and exit
   --dataset DATASET
   --input INPUT, -i INPUT
-  --geom GEOM [GEOM ...], -g GEOM [GEOM ...]
-  --stat STAT [STAT ...], -s STAT [STAT ...]
-  --scale SCALE [SCALE ...]
-  --facet FACET [FACET ...], -f FACET [FACET ...]
+  --geom GEOM [ARG=VAL ...], -g GEOM [ARG=VAL ...]
+  --stat STAT [ARG=VAL ...], -s STAT [ARG=VAL ...]
+  --scale SCALE=TYPE [ARG=VAL ...]
+  --facet TYPE [ARG=VAL ...], -f TYPE [ARG=VAL ...]
+  --theme [NAME] [ARG=VAL ...], -t [NAME] [ARG=VAL ...]
   --xlab XLAB
   --ylab YLAB
   --title TITLE
@@ -41,7 +42,7 @@ python -m plotnine --dataset economics \
     -s smooth method=glm
 ```
 
-There's support, at least on some level, for geoms (`-g`, `--geom`), stats (`-s`, `--stat`), scales (`--scale`), facets (`-f`, `--facet`), labels (`--xlab`, `--ylab`), title (`--title`). You can take input from a file (`-i`), stdin (default), or one of the builtin datasets (`--dataset`).
+There's support, at least on some level, for geoms (`-g`, `--geom`), stats (`-s`, `--stat`), scales (`--scale`), facets (`-f`, `--facet`), themes (`-t`, `--theme`), labels (`--xlab`, `--ylab`), title (`--title`). You can take input from a file (`-i`), stdin (default), or one of the builtin datasets (`--dataset`).
 
 The general model, right now, is that after `-g`, `-s` and `-f`, you specify a name and keyword parameters in the form `key=value`. The name is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the grid. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python.
 
@@ -53,7 +54,7 @@ Here are some things it lacks:
 * There's no way to pass an aes or a dataset to a specific layer.
 * In general, there's no way to pass parameters other than strings, ints and floats to anything.
 * It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet.
-* There's no support for themes.
+* You can't save the output.
 * This file is the full extent of the documentation.
 * I haven't put serious thought into how to define the interface.
 * It's not on pip or anything, you just have to install it from here. You need to install plotnine, too.

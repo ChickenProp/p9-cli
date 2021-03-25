@@ -39,15 +39,27 @@ def get_scale(scale):
 def get_facet(facet):
     return getattr(p9, f'facet_{facet}')
 
+def get_theme(theme_args):
+    if '=' in theme_args[0]:
+        return p9.theme(**parse_kwargs(theme_args))
+    else:
+        theme_func = getattr(p9, f'theme_{theme_args[0]}')
+        return theme_func(**parse_kwargs(theme_args[1:]))
+
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
     dataset_group = parser.add_mutually_exclusive_group()
     dataset_group.add_argument('--dataset')
     dataset_group.add_argument('--input', '-i')
-    parser.add_argument('--geom', '-g', action='append', nargs='+')
-    parser.add_argument('--stat', '-s', action='append', nargs='+')
-    parser.add_argument('--scale', action='append', nargs='+')
-    parser.add_argument('--facet', '-f', nargs='+')
+    parser.add_argument('--geom', '-g', action='append', nargs='+',
+                        metavar=('GEOM', 'ARG=VAL'))
+    parser.add_argument('--stat', '-s', action='append', nargs='+',
+                        metavar=('STAT', 'ARG=VAL'))
+    parser.add_argument('--scale', action='append', nargs='+',
+                        metavar=('SCALE=TYPE', 'ARG=VAL'))
+    parser.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'))
+    parser.add_argument('--theme', '-t', action='append', nargs='+',
+                        metavar=('[NAME]', 'ARG=VAL'))
     parser.add_argument('--xlab')
     parser.add_argument('--ylab')
     parser.add_argument('--title')
@@ -65,6 +77,8 @@ def parse_command_line(argv):
                   for s in args.stat or [] ]
     args.scale = [ get_scale(s[0])(**parse_scale_kwargs(s[1:]))
                    for s in args.scale or [] ]
+    args.theme = [ get_theme(t) for t in args.theme or [] ]
+
     if args.facet:
         args.facet = get_facet(args.facet[0])(**parse_kwargs(args.facet[1:]))
 
@@ -80,25 +94,30 @@ def main():
         import plotnine.data
         data = getattr(plotnine.data, args.dataset)
 
-    geoms = args.geom or None
-    stats = args.stat or None
-    scales = args.scale or None
-    facet = [args.facet] if args.facet is not None else None
-    title = p9.ggtitle(args.title) if args.title is not None else None
-    xlab = p9.xlab(args.xlab) if args.xlab is not None else None
-    ylab = p9.ylab(args.ylab) if args.ylab is not None else None
+    parts = [
+        args.geom or None,
+        args.stat or None,
+        args.scale or None,
+        args.facet,
+        p9.ggtitle(args.title) if args.title is not None else None,
+        p9.xlab(args.xlab) if args.xlab is not None else None,
+        p9.ylab(args.ylab) if args.ylab is not None else None,
+        args.theme if args.theme is not None else None,
 
-    default_geom = \
-        [p9.geom_point()] if geoms is None and stats is None else None
+        # Default geom, only if no geom and stat provided.
+        p9.geom_point() if not args.geom and not args.stat else None
+    ]
 
-    parts = []
-    for x in [default_geom, geoms, stats, scales, facet, title, xlab, ylab]:
-        if x is not None:
-            parts.extend(x)
+    plot = p9.ggplot(data, args.aes)
+
+    for p in parts:
+        if p is not None:
+            # plot += p doesn't work if p is a list
+            plot = plot + p
 
     # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
     # this.
-    str(p9.ggplot(data, args.aes) + parts)
+    str(plot)
 
 if __name__ == '__main__':
     main()
