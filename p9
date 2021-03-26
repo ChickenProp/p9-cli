@@ -3,10 +3,6 @@
 import sys
 import argparse
 
-import plotnine as p9
-import pandas as pd
-from datetime import date
-
 def parse_kwargs(kwargs):
     def parse_val(v):
         try:
@@ -24,27 +20,6 @@ def parse_scale_kwargs(kwargs):
     if 'min' in kwargs or 'max' in kwargs:
         kwargs['limits'] = ( kwargs.pop('min', None), kwargs.pop('max', None) )
     return kwargs
-
-def get_geom(geom):
-    return getattr(p9, f'geom_{geom}')
-
-def get_stat(stat):
-    return getattr(p9, f'stat_{stat}')
-
-def get_scale(scale):
-    (p1, p2) = scale.split('=', 1)
-    name = f'scale_{p1}_{p2}'
-    return getattr(p9, name)
-
-def get_facet(facet):
-    return getattr(p9, f'facet_{facet}')
-
-def get_theme(theme_args):
-    if '=' in theme_args[0]:
-        return p9.theme(**parse_kwargs(theme_args))
-    else:
-        theme_func = getattr(p9, f'theme_{theme_args[0]}')
-        return theme_func(**parse_kwargs(theme_args[1:]))
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
@@ -70,50 +45,65 @@ def parse_command_line(argv):
     if args.dataset is None and args.input is None:
         args.input = '-'
 
-    args.aes = p9.aes(**parse_kwargs(args.aes))
-    args.geom = [ get_geom(g[0])(**parse_kwargs(g[1:]))
-                  for g in args.geom or [] ]
-    args.stat = [ get_stat(s[0])(**parse_kwargs(s[1:]))
-                  for s in args.stat or [] ]
-    args.scale = [ get_scale(s[0])(**parse_scale_kwargs(s[1:]))
-                   for s in args.scale or [] ]
-    args.theme = [ get_theme(t) for t in args.theme or [] ]
-
-    if args.facet:
-        args.facet = get_facet(args.facet[0])(**parse_kwargs(args.facet[1:]))
-
     return args
 
-def main():
-    args = parse_command_line(sys.argv[1:])
+def build_plot(args):
+    # Don't import these unless necessary, to keep --help fast.
+    import plotnine as p9
+    import pandas as pd
 
-    if args.input:
+    def get_p9(group, name):
+        return getattr(p9, f'{group}_{name}')
+
+    if args.input is not None:
         file = args.input if args.input != '-' else sys.stdin
         data = pd.read_csv(file, sep=None, engine='python')
     else:
         import plotnine.data
         data = getattr(plotnine.data, args.dataset)
 
-    parts = [
-        args.geom or None,
-        args.stat or None,
-        args.scale or None,
-        args.facet,
+    aes = p9.aes(**parse_kwargs(args.aes))
+
+    plot = p9.ggplot(data, aes)
+
+    for x in args.geom or []:
+        plot += get_p9('geom', x[0])(**parse_kwargs(x[1:]))
+    for x in args.stat or []:
+        plot += get_p9('stat', x[0])(**parse_kwargs(x[1:]))
+
+    for x in args.scale or []:
+        (p1, p2) = x[0].split('=', 1)
+        plot += get_p9('scale', f'{p1}_{p2}')(**parse_scale_kwargs(x[1:]))
+
+    for x in args.theme or []:
+        # We support both named themes (`-t xkcd stroke_size=5`)...
+        if '=' not in x[0]:
+            plot += get_p9('theme', x[0])(**parse_kwargs(x[1:]))
+
+        # ...and fully custom themes (`-t plot_margin=0.2`)
+        else:
+            plot += p9.theme(**parse_kwargs(x))
+
+    if args.facet is not None:
+        plot += get_p9('facet', args.facet[0])(**parse_kwargs(args.facet[1:]))
+
+    more_parts = [
         p9.ggtitle(args.title) if args.title is not None else None,
         p9.xlab(args.xlab) if args.xlab is not None else None,
         p9.ylab(args.ylab) if args.ylab is not None else None,
-        args.theme if args.theme is not None else None,
 
         # Default geom, only if no geom and stat provided.
         p9.geom_point() if not args.geom and not args.stat else None
     ]
 
-    plot = p9.ggplot(data, args.aes)
+    # `plot += [...]` doesn't work, but `plot = plot + [...]` does
+    plot = plot + [x for x in more_parts if x is not None]
 
-    for p in parts:
-        if p is not None:
-            # plot += p doesn't work if p is a list
-            plot = plot + p
+    return plot
+
+def main():
+    args = parse_command_line(sys.argv[1:])
+    plot = build_plot(args)
 
     # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
     # this.
