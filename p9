@@ -5,6 +5,12 @@ import argparse
 
 def parse_kwargs(kwargs):
     def parse_val(v):
+        if (v == '-'):
+            return None
+        if (v == 'y'):
+            return True
+        if (v == 'n'):
+            return False
         try:
             return int(v)
         except Exception as e:
@@ -26,7 +32,9 @@ def parse_command_line(argv):
 
     dataset_group = parser.add_mutually_exclusive_group()
     dataset_group.add_argument('--dataset')
-    dataset_group.add_argument('--input', '-i')
+    dataset_group.add_argument('--input', '-i', metavar='FILE')
+
+    parser.add_argument('--csv', nargs='+', metavar='ARG=VAL')
 
     parser.add_argument('--output', '-o', nargs='+',
                         metavar=('FILE', 'ARG=VAL'))
@@ -47,6 +55,10 @@ def parse_command_line(argv):
 
     args = parser.parse_args(argv)
 
+    # argparse doesn't seem to let us group things to handle this automatically.
+    if args.dataset is not None and args.csv is not None:
+        parser.error('argument --csv: not allowed with argument --dataset')
+
     if args.dataset is None and args.input is None:
         args.input = '-'
 
@@ -62,7 +74,10 @@ def build_plot(args):
 
     if args.input is not None:
         file = args.input if args.input != '-' else sys.stdin
-        data = pd.read_csv(file, sep=None, engine='python')
+        kwargs = parse_kwargs(args.csv or [])
+        kwargs.setdefault('sep', None)
+        kwargs.setdefault('engine', 'python')
+        data = pd.read_csv(file, **kwargs)
     else:
         import plotnine.data
         data = getattr(plotnine.data, args.dataset)
