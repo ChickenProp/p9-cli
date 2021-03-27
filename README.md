@@ -3,10 +3,17 @@
 It's a command line interface to [plotnine](https://plotnine.readthedocs.io/en/stable/), which is a Python adaptation of [ggplot2](https://ggplot2.tidyverse.org/). It won't let you do anything that you couldn't do with a simple python script. But it might be more convenient than writing one of those.
 
 ```
-usage: p9 [-h] [--dataset DATASET | --input INPUT] [--geom GEOM [ARG=VAL ...]]
-          [--stat STAT [ARG=VAL ...]] [--scale SCALE=TYPE [ARG=VAL ...]]
-          [--facet TYPE [ARG=VAL ...]] [--theme [NAME] [ARG=VAL ...]]
-          [--xlab XLAB] [--ylab YLAB] [--title TITLE]
+usage: p9 [-h]
+          [--dataset DATASET | --input INPUT]
+          [--output FILE [ARG=VAL ...]]
+          [--geom GEOM [ARG=VAL ...]]
+          [--stat STAT [ARG=VAL ...]]
+          [--scale SCALE=TYPE [ARG=VAL ...]]
+          [--facet TYPE [ARG=VAL ...]]
+          [--theme [NAME] [ARG=VAL ...]]
+          [--xlab XLAB]
+          [--ylab YLAB]
+          [--title TITLE]
           [aes [aes ...]]
 
 positional arguments:
@@ -16,6 +23,7 @@ optional arguments:
   -h, --help            show this help message and exit
   --dataset DATASET
   --input INPUT, -i INPUT
+  --output FILE [ARG=VAL ...], -o FILE [ARG=VAL ...]
   --geom GEOM [ARG=VAL ...], -g GEOM [ARG=VAL ...]
   --stat STAT [ARG=VAL ...], -s STAT [ARG=VAL ...]
   --scale SCALE=TYPE [ARG=VAL ...]
@@ -54,7 +62,6 @@ Here are some things it lacks:
 * There's no way to pass an aes or a dataset to a specific layer.
 * In general, there's no way to pass parameters other than strings, ints and floats to anything.
 * It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet.
-* You can't save the output.
 * This file is the full extent of the documentation.
 * I haven't put serious thought into how to define the interface.
 * It's not on pip or anything, you just have to install it from here. You need to install plotnine, too.

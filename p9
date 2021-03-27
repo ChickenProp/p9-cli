@@ -23,9 +23,14 @@ def parse_scale_kwargs(kwargs):
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
+
     dataset_group = parser.add_mutually_exclusive_group()
     dataset_group.add_argument('--dataset')
     dataset_group.add_argument('--input', '-i')
+
+    parser.add_argument('--output', '-o', nargs='+',
+                        metavar=('FILE', 'ARG=VAL'))
+
     parser.add_argument('--geom', '-g', action='append', nargs='+',
                         metavar=('GEOM', 'ARG=VAL'))
     parser.add_argument('--stat', '-s', action='append', nargs='+',
@@ -105,9 +110,13 @@ def main():
     args = parse_command_line(sys.argv[1:])
     plot = build_plot(args)
 
-    # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
-    # this.
-    str(plot)
+    if args.output is None:
+        # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
+        # this.
+        str(plot)
+    else:
+        # Note: generates `PlotnineWarning`s that we probably want to suppress.
+        plot.save(args.output[0], **parse_kwargs(args.output[1:]))
 
 if __name__ == '__main__':
     main()
