@@ -55,17 +55,11 @@ cat owid-covid-data.csv \
 # Some notes:
 #
 # * min= and max= are p9-cli ways to set the lower and upper limits separately.
+#   Here we use them together, but `limits,=0.35 ,=2.65` would also have worked.
 #
 # * The background of this is transparent, because that's what theme_void()
 #   sets. p9-cli has no way to override that, since it can't construct the
 #   `element_` classes.
-#
-# * p9-cli also has no way to add annotations. Something like
-#
-#       -g text mapping.x=1 .y=13 .label='"(01-Sep-2020)"' size=9
-#
-#   almost works, but draws once for each row, slow and ugly. It would work if
-#   we could parse `.label` as a one-element list.
 
 cpm () { echo "total_cases_per_million[date==\"$1\"]"; }
 M_Y1="$(cpm 2020-09-01).rank()"
@@ -81,6 +75,8 @@ cat owid-covid-data.csv \
              ha=left nudge-x=0.05 size=9 \
           -g point mapping.x=1 .y="$M_Y1" \
           -g point mapping.x=2 .y="$M_Y2" \
+          --ann text x=0.8 y=12.5 label='Rank 01-Sep-2020' size=8 \
+          --ann text x=2.2 y=12.5 label='Rank 15-Mar-2021' size=8 \
           --scale x-continuous min=0.35 max=2.65 \
           --scale color-brewer type=qual palette=Paired guide=n \
           -t void \

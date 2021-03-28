@@ -38,6 +38,8 @@ def parse_command_line(argv):
                         metavar=('GEOM', 'ARG=VAL'))
     parser.add_argument('--stat', '-s', action='append', nargs='+',
                         metavar=('STAT', 'ARG=VAL'))
+    parser.add_argument('--ann', action='append', nargs='+',
+                        metavar=('GEOM', 'ARG=VAL'))
     parser.add_argument('--scale', action='append', nargs='+',
                         metavar=('SCALE', 'ARG=VAL'))
     parser.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'))
@@ -84,6 +86,8 @@ def build_plot(args):
         plot += get_p9('geom', x[0])(**parse_layer_kwargs(x[1:]))
     for x in args.stat or []:
         plot += get_p9('stat', x[0])(**parse_layer_kwargs(x[1:]))
+    for x in args.ann or []:
+        plot += p9.annotate(x[0].replace('-', '_'), **parse_kwargs(x[1:]))
     for x in args.scale or []:
         plot += get_p9('scale', x[0])(**parse_scale_kwargs(x[1:]))
 
