@@ -52,15 +52,24 @@ python -m plotnine --dataset economics \
 
 There's support, at least on some level, for geoms (`-g`, `--geom`), stats (`-s`, `--stat`), scales (`--scale`), facets (`-f`, `--facet`), themes (`-t`, `--theme`), labels (`--xlab`, `--ylab`), title (`--title`). You can take input from a file (`-i`), stdin (default), or one of the builtin datasets (`--dataset`).
 
-The general model, right now, is that after `-g`, `-s` and `-f`, you specify a name and keyword parameters in the form `key=value`. The name is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the grid. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python.
+The general model, right now, is that after `-g`, `-s` and `-f`, you specify a name and keyword parameters in the form `key=value`. The name is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the plot. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python.
 
 For scales it's slightly different, instead of a name you specify the aesthetic and the specific scale in the form `aes=scale`. So `--scale x=date date_breaks='1 year'` gives you `scale_x_date(date_breaks='1 year')`.
 
+When parsing keyword parameters, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation. You can insert into a dict by appending `.key` to the key, or a list by appending `,`, and then you can leave off the name beforehand in future. So
+
+```
+a=3 b=4.5 dict-val.dict-key1=y .dict-key2=:n .dict-key3=- list-val,=foo ,=bar
+==> { 'a': 3,
+      'b': 4.5,
+      'dict_val': {'dict_key1': True, 'dict_key2': 'n', 'dict_key3': None},
+      'list_val': ['foo', 'bar']
+    }
+```
+
 Here are some things it lacks:
 
-* For non-builtin datasets, there's no way to configure csv parsing. It's implemented with pandas' `read_csv` function, autodetecting the format, so it will hopefully do the right thing but who knows. A header is required. You can't specify data types or parsing details, if they aren't detected correctly. (Though you can still do, e.g., `x='date_col.astype("datetime64")'`.)
 * There's no way to pass an aes or a dataset to a specific layer.
-* In general, there's no way to pass parameters other than strings, ints and floats to anything.
 * It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet.
 * This file is the full extent of the documentation.
 * I haven't put serious thought into how to define the interface.
