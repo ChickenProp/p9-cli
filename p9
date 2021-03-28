@@ -39,14 +39,14 @@ def parse_command_line(argv):
     parser.add_argument('--stat', '-s', action='append', nargs='+',
                         metavar=('STAT', 'ARG=VAL'))
     parser.add_argument('--scale', action='append', nargs='+',
-                        metavar=('SCALE=TYPE', 'ARG=VAL'))
+                        metavar=('SCALE', 'ARG=VAL'))
     parser.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'))
     parser.add_argument('--theme', '-t', action='append', nargs='+',
                         metavar=('[NAME]', 'ARG=VAL'))
     parser.add_argument('--xlab')
     parser.add_argument('--ylab')
     parser.add_argument('--title')
-    parser.add_argument('aes', nargs='*')
+    parser.add_argument('mapping', nargs='*')
 
     args = parser.parse_args(argv)
 
@@ -63,6 +63,7 @@ def build_plot(args):
     ensure_imports()
 
     def get_p9(group, name):
+        name = name.replace('-', '_')
         return getattr(p9, f'{group}_{name}')
 
     if args.input is not None:
@@ -75,17 +76,16 @@ def build_plot(args):
         import plotnine.data
         data = getattr(plotnine.data, args.dataset)
 
-    aes = p9.aes(**parse_kwargs(args.aes))
+    mapping = p9.aes(**parse_kwargs(args.mapping))
 
-    plot = p9.ggplot(data, aes)
+    plot = p9.ggplot(data, mapping)
 
     for x in args.geom or []:
         plot += get_p9('geom', x[0])(**parse_layer_kwargs(x[1:]))
     for x in args.stat or []:
         plot += get_p9('stat', x[0])(**parse_layer_kwargs(x[1:]))
-
     for x in args.scale or []:
-        plot += get_p9('scale', f'{p1}_{p2}')(**parse_scale_kwargs(x[1:]))
+        plot += get_p9('scale', x[0])(**parse_scale_kwargs(x[1:]))
 
     for x in args.theme or []:
         # We support both named themes (`-t xkcd stroke_size=5`)...
@@ -104,7 +104,7 @@ def build_plot(args):
         p9.xlab(args.xlab) if args.xlab is not None else None,
         p9.ylab(args.ylab) if args.ylab is not None else None,
 
-        # Default geom, only if no geom and stat provided.
+        # Default geom, only if no geom or stat provided.
         p9.geom_point() if not args.geom and not args.stat else None
     ]
 

@@ -4,29 +4,29 @@ It's a command line interface to [plotnine](https://plotnine.readthedocs.io/en/s
 
 ```
 usage: p9 [-h]
-          [--dataset DATASET | --input INPUT]
+          [--dataset DATASET | --input FILE]
+          [--csv ARG=VAL [ARG=VAL ...]]
           [--output FILE [ARG=VAL ...]]
           [--geom GEOM [ARG=VAL ...]]
           [--stat STAT [ARG=VAL ...]]
-          [--scale SCALE=TYPE [ARG=VAL ...]]
+          [--scale SCALE [ARG=VAL ...]]
           [--facet TYPE [ARG=VAL ...]]
           [--theme [NAME] [ARG=VAL ...]]
-          [--xlab XLAB]
-          [--ylab YLAB]
-          [--title TITLE]
-          [aes [aes ...]]
+          [--xlab XLAB] [--ylab YLAB] [--title TITLE]
+          [mapping [mapping ...]]
 
 positional arguments:
-  aes
+  mapping
 
 optional arguments:
   -h, --help            show this help message and exit
   --dataset DATASET
-  --input INPUT, -i INPUT
+  --input FILE, -i FILE
+  --csv ARG=VAL [ARG=VAL ...]
   --output FILE [ARG=VAL ...], -o FILE [ARG=VAL ...]
   --geom GEOM [ARG=VAL ...], -g GEOM [ARG=VAL ...]
   --stat STAT [ARG=VAL ...], -s STAT [ARG=VAL ...]
-  --scale SCALE=TYPE [ARG=VAL ...]
+  --scale SCALE [ARG=VAL ...]
   --facet TYPE [ARG=VAL ...], -f TYPE [ARG=VAL ...]
   --theme [NAME] [ARG=VAL ...], -t [NAME] [ARG=VAL ...]
   --xlab XLAB
@@ -52,11 +52,9 @@ python -m plotnine --dataset economics \
 
 There's support, at least on some level, for geoms (`-g`, `--geom`), stats (`-s`, `--stat`), scales (`--scale`), facets (`-f`, `--facet`), themes (`-t`, `--theme`), labels (`--xlab`, `--ylab`), title (`--title`). You can take input from a file (`-i`), stdin (default), or one of the builtin datasets (`--dataset`).
 
-The general model, right now, is that after `-g`, `-s` and `-f`, you specify a name and keyword parameters in the form `key=value`. The name is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the plot. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python.
+The general model is that you pass aesthetic mappings in the form `key=value` and add plot elements with the optional arguments. For `--geom`, `--stat`, `--scale` and `--facet`, you specify a name and keyword parameters in the form `key=value`. The name (with `-` replaced with `_`) is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the plot. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python. `--scale x-date` is `scale_x_date()`.
 
-For scales it's slightly different, instead of a name you specify the aesthetic and the specific scale in the form `aes=scale`. So `--scale x=date date_breaks='1 year'` gives you `scale_x_date(date_breaks='1 year')`.
-
-When parsing keyword parameters, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation. You can insert into a dict by appending `.key` to the key, or a list by appending `,`, and then you can leave off the name beforehand in future. So
+When parsing keyword parameters, including aesthetic mappings, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation. You can insert into a dict by appending `.key` to the key, or a list by appending `,`, and then you can leave off the name beforehand in future. So
 
 ```
 a=3 b=4.5 dict-val.dict-key1=y .dict-key2=:n .dict-key3=- list-val,=foo ,=bar
