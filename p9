@@ -26,29 +26,46 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser()
 
     dataset_group = parser.add_mutually_exclusive_group()
-    dataset_group.add_argument('--dataset')
-    dataset_group.add_argument('--input', '-i', metavar='FILE')
+    dataset_group.add_argument('--dataset',
+                               help='Use a built-in plotnine dataset')
+    dataset_group.add_argument('--input', '-i', metavar='FILE',
+                               help='Read data from FILE')
 
-    parser.add_argument('--csv', nargs='+', metavar='ARG=VAL')
+    parser.add_argument('--csv', nargs='+', metavar='ARG=VAL',
+                        help='Configure csv parsing (see pandas.read_csv)')
 
     parser.add_argument('--output', '-o', nargs='+',
-                        metavar=('FILE', 'ARG=VAL'))
+                        metavar=('FILE', 'ARG=VAL'),
+                        help='Save output to FILE')
 
-    parser.add_argument('--geom', '-g', action='append', nargs='+',
-                        metavar=('GEOM', 'ARG=VAL'))
-    parser.add_argument('--stat', '-s', action='append', nargs='+',
-                        metavar=('STAT', 'ARG=VAL'))
-    parser.add_argument('--ann', action='append', nargs='+',
-                        metavar=('GEOM', 'ARG=VAL'))
-    parser.add_argument('--scale', action='append', nargs='+',
-                        metavar=('SCALE', 'ARG=VAL'))
-    parser.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'))
-    parser.add_argument('--theme', '-t', action='append', nargs='+',
-                        metavar=('[NAME]', 'ARG=VAL'))
-    parser.add_argument('--xlab')
-    parser.add_argument('--ylab')
-    parser.add_argument('--title')
-    parser.add_argument('mapping', nargs='*')
+    pgrp = parser.add_argument_group('Plot elements')
+    pgrp.add_argument('--geom', '-g', action='append', nargs='+',
+                      metavar=('GEOM', 'ARG=VAL'),
+        help='Add a geom to the plot (see plotnine.geoms)')
+    pgrp.add_argument('--stat', '-s', action='append', nargs='+',
+                      metavar=('STAT', 'ARG=VAL'),
+        help='Add a stat to the plot (see plotnine.stats)')
+    pgrp.add_argument('--ann', action='append', nargs='+',
+                      metavar=('GEOM', 'ARG=VAL'),
+        help='Add an annotation to the plot (see plotnine.annotate)')
+    pgrp.add_argument('--scale', action='append', nargs='+',
+                      metavar=('SCALE', 'ARG=VAL'),
+        help='Add an annotation to the plot (see plotnine.scales)')
+    pgrp.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'),
+        help='Add faceting to the plot (see plotnine.facets)')
+    pgrp.add_argument('--theme', '-t', action='append', nargs='+',
+                      metavar=('[NAME]', 'ARG=VAL'),
+        help='''With NAME, apply a built-in theme to the plot;
+                without, customize the theme (see plotnine.themes)''')
+    pgrp.add_argument('--xlab',
+        help='Add an x-axis label to the plot (see plotnine.xlab)')
+    pgrp.add_argument('--ylab',
+        help='Add a y-axis label to the plot (see plotnine.ylab)')
+    pgrp.add_argument('--title',
+        help='Add a title to the plot (see plotnine.ggtitle')
+    pgrp.add_argument('mapping', nargs='*',
+        help='''Add an aesthetic mapping to the plot
+                (see plotnine.ggplot, plotnine.aes)''')
 
     args = parser.parse_args(argv)
 
