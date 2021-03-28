@@ -69,7 +69,7 @@ a=3 b=4.5 dict-val.dict-key1=y .dict-key2=:n .dict-key3=- list-val,=foo ,=bar
 
 Here are some things it lacks:
 
-* There's no way to pass an aes or a dataset to a specific layer.
+* There's no way to pass a dataset to a specific layer.
 * It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet.
 * This file is the full extent of the documentation.
 * I haven't put serious thought into how to define the interface.

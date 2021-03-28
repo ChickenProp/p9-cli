@@ -4,6 +4,12 @@ import sys
 import argparse
 import re
 
+# These are slow to import, and we want --help to be fast. Call
+# `ensure_imports()` to bring them in.
+p9 = None
+pandas = None
+_done_imports = False
+
 def main():
     args = parse_command_line(sys.argv[1:])
     plot = build_plot(args)
@@ -54,9 +60,7 @@ def parse_command_line(argv):
     return args
 
 def build_plot(args):
-    # Don't import these unless necessary, to keep --help fast.
-    import plotnine as p9
-    import pandas as pd
+    ensure_imports()
 
     def get_p9(group, name):
         return getattr(p9, f'{group}_{name}')
@@ -76,12 +80,11 @@ def build_plot(args):
     plot = p9.ggplot(data, aes)
 
     for x in args.geom or []:
-        plot += get_p9('geom', x[0])(**parse_kwargs(x[1:]))
+        plot += get_p9('geom', x[0])(**parse_layer_kwargs(x[1:]))
     for x in args.stat or []:
-        plot += get_p9('stat', x[0])(**parse_kwargs(x[1:]))
+        plot += get_p9('stat', x[0])(**parse_layer_kwargs(x[1:]))
 
     for x in args.scale or []:
-        (p1, p2) = x[0].split('=', 1)
         plot += get_p9('scale', f'{p1}_{p2}')(**parse_scale_kwargs(x[1:]))
 
     for x in args.theme or []:
@@ -109,6 +112,13 @@ def build_plot(args):
     plot = plot + [x for x in more_parts if x is not None]
 
     return plot
+
+def parse_layer_kwargs(kwargs):
+    ensure_imports()
+    kwargs = parse_kwargs(kwargs)
+    if 'mapping' in kwargs:
+        kwargs['mapping'] = p9.aes(**kwargs['mapping'])
+    return kwargs
 
 def parse_scale_kwargs(kwargs):
     kwargs = parse_kwargs(kwargs)
@@ -190,6 +200,15 @@ def parse_kwargs(kwargs):
             raise RuntimeError('Bad parsed key')
 
     return ret
+
+def ensure_imports():
+    """Make sure all the imports we need are available."""
+    global p9, pd, _done_imports
+    if not _done_imports:
+        import plotnine
+        import pandas
+        p9 = plotnine
+        pd = pandas
 
 if __name__ == '__main__':
     main()
