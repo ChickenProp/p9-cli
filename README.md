@@ -94,8 +94,6 @@ Here are some things it lacks:
 
 * This file, plus the file examples.sh, is the full extent of the documentation.
 
-* I haven't put serious thought into how to define the interface.
-
 * It's not on pip or anything, you just have to install it from here. You need to install plotnine, too.
 
 I make no commitment to future development.
