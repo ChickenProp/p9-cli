@@ -4,86 +4,17 @@ import sys
 import argparse
 import re
 
-def parse_kwargs(kwargs):
-    def parse_key(key):
-        key = key.replace('-', '_')
+def main():
+    args = parse_command_line(sys.argv[1:])
+    plot = build_plot(args)
 
-        if re.match(r'^\w+$', key):
-            return ('plain-key', key)
-        elif match := re.match(r'^(\w+)\.(\w+)$', key):
-            return ('dict-key', match.group(1), match.group(2))
-        elif match := re.match(r'^\.(\w+)$', key):
-            return ('implicit-dict-key', match.group(1))
-        elif match := re.match(r'^(\w+)\,$', key):
-            return ('list-append', match.group(1))
-        elif key == ',':
-            return ('implicit-list-append',)
-        else:
-            raise ValueError(f'bad key: "{key}"')
-
-    def parse_val(v):
-        if v.startswith(':'):
-            return v[1:]
-        elif (v == '-'):
-            return None
-        elif (v == 'y'):
-            return True
-        elif (v == 'n'):
-            return False
-        try:
-            return int(v)
-        except Exception as e:
-            try:
-                return float(v)
-            except Exception as e:
-                return v
-
-    ret = {}
-    implicit_base = None
-    for arg in kwargs:
-        (key, val) = arg.split('=', 1)
-        key = parse_key(key)
-        val = parse_val(val)
-
-        def set_dict(base, sub):
-            context = ret.setdefault(base, {})
-            if not isinstance(context, dict):
-                raise ValueError(f'Key "{base}" already contains non-dict')
-            context[sub] = val
-
-        def set_list(base):
-            context = ret.setdefault(base, [])
-            if not isinstance(context, list):
-                raise ValueError(f'Key "{base}" already contains non-list')
-            context.append(val)
-
-        if key[0] == 'plain-key':
-            ret[key[1]] = val
-            implicit_base = None
-        elif key[0] == 'dict-key':
-            set_dict(key[1], key[2])
-            implicit_base = key[1]
-        elif key[0] == 'list-append':
-            set_list(key[1])
-            implicit_base = key[1]
-        elif key[0] == 'implicit-dict-key':
-            if implicit_base is None:
-                raise ValueError(f'No previous base at "{arg}"')
-            set_dict(implicit_base, key[1])
-        elif key[0] == 'implicit-list-append':
-            if implicit_base is None:
-                raise ValueError(f'No previous base at "{arg}"')
-            set_list(implicit_base)
-        else:
-            raise RuntimeError('Bad parsed key')
-
-    return ret
-
-def parse_scale_kwargs(kwargs):
-    kwargs = parse_kwargs(kwargs)
-    if 'min' in kwargs or 'max' in kwargs:
-        kwargs['limits'] = ( kwargs.pop('min', None), kwargs.pop('max', None) )
-    return kwargs
+    if args.output is None:
+        # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
+        # this.
+        str(plot)
+    else:
+        # Note: generates `PlotnineWarning`s that we probably want to suppress.
+        plot.save(args.output[0], **parse_kwargs(args.output[1:]))
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
@@ -179,17 +110,86 @@ def build_plot(args):
 
     return plot
 
-def main():
-    args = parse_command_line(sys.argv[1:])
-    plot = build_plot(args)
+def parse_scale_kwargs(kwargs):
+    kwargs = parse_kwargs(kwargs)
+    if 'min' in kwargs or 'max' in kwargs:
+        kwargs['limits'] = ( kwargs.pop('min', None), kwargs.pop('max', None) )
+    return kwargs
 
-    if args.output is None:
-        # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
-        # this.
-        str(plot)
-    else:
-        # Note: generates `PlotnineWarning`s that we probably want to suppress.
-        plot.save(args.output[0], **parse_kwargs(args.output[1:]))
+def parse_kwargs(kwargs):
+    def parse_key(key):
+        key = key.replace('-', '_')
+
+        if re.match(r'^\w+$', key):
+            return ('plain-key', key)
+        elif match := re.match(r'^(\w+)\.(\w+)$', key):
+            return ('dict-key', match.group(1), match.group(2))
+        elif match := re.match(r'^\.(\w+)$', key):
+            return ('implicit-dict-key', match.group(1))
+        elif match := re.match(r'^(\w+)\,$', key):
+            return ('list-append', match.group(1))
+        elif key == ',':
+            return ('implicit-list-append',)
+        else:
+            raise ValueError(f'bad key: "{key}"')
+
+    def parse_val(v):
+        if v.startswith(':'):
+            return v[1:]
+        elif (v == '-'):
+            return None
+        elif (v == 'y'):
+            return True
+        elif (v == 'n'):
+            return False
+        try:
+            return int(v)
+        except Exception as e:
+            try:
+                return float(v)
+            except Exception as e:
+                return v
+
+    ret = {}
+    implicit_base = None
+    for arg in kwargs:
+        (key, val) = arg.split('=', 1)
+        key = parse_key(key)
+        val = parse_val(val)
+
+        def set_dict(base, sub):
+            context = ret.setdefault(base, {})
+            if not isinstance(context, dict):
+                raise ValueError(f'Key "{base}" already contains non-dict')
+            context[sub] = val
+
+        def set_list(base):
+            context = ret.setdefault(base, [])
+            if not isinstance(context, list):
+                raise ValueError(f'Key "{base}" already contains non-list')
+            context.append(val)
+
+        if key[0] == 'plain-key':
+            ret[key[1]] = val
+            implicit_base = None
+        elif key[0] == 'dict-key':
+            set_dict(key[1], key[2])
+            implicit_base = key[1]
+        elif key[0] == 'list-append':
+            set_list(key[1])
+            implicit_base = key[1]
+        elif key[0] == 'implicit-dict-key':
+            if implicit_base is None:
+                raise ValueError(f'No previous base at "{arg}"')
+            set_dict(implicit_base, key[1])
+        elif key[0] == 'implicit-list-append':
+            if implicit_base is None:
+                raise ValueError(f'No previous base at "{arg}"')
+            set_list(implicit_base)
+        else:
+            raise RuntimeError('Bad parsed key')
+
+    return ret
 
 if __name__ == '__main__':
     main()
