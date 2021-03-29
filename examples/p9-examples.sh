@@ -19,11 +19,18 @@ $P9 --dataset=mpg x='factor(cyl)' fill=drv \
 # https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_smooth.html#smoothed-conditional-means
 # We adjust the right margin to make more space for the legend. With -o the size
 # gets expanded anyway, but it improves the windowed render.
+
 $P9 --dataset mpg x=displ y=hwy color=drv \
     -g point -s smooth method=lm \
-    --xlab displacement --ylab horsepower --scale color-discrete name=drive \
+    --xlab displacement --ylab 'mpg (highway)' \
+    --scale color-discrete name=drive \
     -t subplots-adjust.right=0.85 \
     -o smoothed-conditional-means.png
+
+# Faceting, similar to
+# https://www.r-graph-gallery.com/223-faceting-with-ggplot2.html
+
+$P9 --dataset mtcars x=mpg y=wt -f grid facets='cyl ~ gear' -o faceting.png
 
 # Time series. We use grep to select twelve countries (plus the header line)
 # from the full dataset, which kind of sucks. It would be nice to use a tool
@@ -81,5 +88,6 @@ cat owid-covid-data.csv \
           --scale color-brewer type=qual palette=Paired guide=n \
           -t void \
           -t figure_size,=4 ,=6 \
+          --title 'Ranked confirmed covid cases per million' \
           --csv dtype.date=datetime64 \
           -o change-in-rank.png
