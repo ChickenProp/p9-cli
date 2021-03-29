@@ -84,10 +84,10 @@ cat owid-covid-data.csv \
           -g point mapping.x=2 .y="$M_Y2" \
           --ann text x=0.8 y=12.5 label='Rank 01-Sep-2020' size=8 \
           --ann text x=2.2 y=12.5 label='Rank 15-Mar-2021' size=8 \
-          --scale x-continuous min=0.35 max=2.65 \
+          --scale x-continuous min=0.25 max=2.75 \
           --scale color-brewer type=qual palette=Paired guide=n \
           -t void \
-          -t figure_size,=4 ,=6 \
+          -t figure_size,=4.3 ,=6 \
           --title 'Ranked confirmed covid cases per million' \
           --csv dtype.date=datetime64 \
           -o change-in-rank.png
