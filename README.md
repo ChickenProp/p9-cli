@@ -88,9 +88,13 @@ Here are some things it lacks:
 
 * There's no way to pass a dataset to a specific layer.
 
+* No support for coord transformations.
+
+* No support for animations.
+
 * Many theme elements aren't configurable because they're required to be specific `element_*` types that p9-cli can't construct.
 
-* It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet.
+* It should be possible to use `..foo..` and (equivalently) `stat(foo)` in your aesthetics. But it looks like those are deprecated features of plotnine. The current way to do these in python would be `y=after_stat('foo')` (instead of `y='..foo..'` or `y='stat(foo)'`), but p9-cli doesn't support that yet. Nor does it support `after_scale()` or `stage()`, which have no equivalent.
 
 * This file, plus the file examples.sh, is the full extent of the documentation.
 
