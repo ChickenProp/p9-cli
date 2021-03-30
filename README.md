@@ -44,7 +44,7 @@ Plot elements:
                         without, customize the theme (see plotnine.themes)
   --xlab XLAB           Add an x-axis label to the plot (see plotnine.xlab)
   --ylab YLAB           Add a y-axis label to the plot (see plotnine.ylab)
-  --title TITLE         Add a title to the plot (see plotnine.ggtitle
+  --title TITLE         Add a title to the plot (see plotnine.ggtitle)
   mapping               Add an aesthetic mapping to the plot (see
                         plotnine.ggplot, plotnine.aes)
 ```

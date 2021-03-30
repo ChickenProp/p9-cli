@@ -62,7 +62,7 @@ def parse_command_line(argv):
     pgrp.add_argument('--ylab',
         help='Add a y-axis label to the plot (see plotnine.ylab)')
     pgrp.add_argument('--title',
-        help='Add a title to the plot (see plotnine.ggtitle')
+        help='Add a title to the plot (see plotnine.ggtitle)')
     pgrp.add_argument('mapping', nargs='*',
         help='''Add an aesthetic mapping to the plot
                 (see plotnine.ggplot, plotnine.aes)''')
