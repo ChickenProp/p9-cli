@@ -36,7 +36,10 @@ def parse_command_line(argv):
 
     parser.add_argument('--output', '-o', nargs='+',
                         metavar=('FILE', 'ARG=VAL'),
-                        help='Save output to FILE')
+                        help='Save output to FILE (see plotnine.ggplot.save)')
+
+    parser.add_argument('--dump-csv', nargs='*',
+        help='Print dataset as CSV to stderr (see pandas.DataFrame.to_csv)')
 
     pgrp = parser.add_argument_group('Plot elements')
     pgrp.add_argument('--geom', '-g', action='append', nargs='+',
@@ -94,6 +97,9 @@ def build_plot(args):
     else:
         import plotnine.data
         data = getattr(plotnine.data, args.dataset)
+
+    if args.dump_csv is not None:
+        data.to_csv(path_or_buf=sys.stderr, **parse_kwargs(args.dump_csv))
 
     mapping = p9.aes(**parse_kwargs(args.mapping))
 
