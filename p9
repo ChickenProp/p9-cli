@@ -236,6 +236,7 @@ def ensure_imports():
         import pandas
         p9 = plotnine
         pd = pandas
+        _done_imports = True
 
 if __name__ == '__main__':
     main()
