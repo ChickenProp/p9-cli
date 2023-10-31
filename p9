@@ -154,6 +154,68 @@ def parse_scale_kwargs(kwargs):
     return kwargs
 
 def parse_kwargs(kwargs):
+    """Parse a list of `key=val` strings into a dictionary.
+
+    Supports values being strings, ints, floats, bools. Also lists and
+    string-keyed dicts containing those types. Does not (yet?) support lists or
+    dicts containing lists or dicts.
+
+    >>> # Simple values
+    >>> parse_kwargs(["a=b"])
+    {'a': 'b'}
+    >>> parse_kwargs(["a=3"])
+    {'a': 3}
+    >>> parse_kwargs(["a=:3"])
+    {'a': '3'}
+    >>> parse_kwargs(["a=y"])
+    {'a': True}
+    >>> parse_kwargs(["a=:y"])
+    {'a': 'y'}
+    >>> parse_kwargs(["a=:"])
+    {'a': ''}
+    >>> parse_kwargs(["a="])
+    {'a': ''}
+    >>> parse_kwargs(["a=::"])
+    {'a': ':'}
+    >>> parse_kwargs(["a-b=3"])
+    {'a_b': 3}
+    >>> parse_kwargs(["a-b-2=3"])
+    {'a_b_2': 3}
+    >>> parse_kwargs(["1=3"])
+    {'1': 3}
+
+    >>> # Lists
+    >>> parse_kwargs(["a,=3"])
+    {'a': [3]}
+    >>> parse_kwargs(["a,=3", ",=foo"])
+    {'a': [3, 'foo']}
+    >>> parse_kwargs(["a=3", ",=foo"])
+    Traceback (most recent call last):
+        ...
+    ValueError: No previous base at ",=foo"
+    >>> parse_kwargs(["a.x=3", ",=foo"])
+    Traceback (most recent call last):
+        ...
+    ValueError: Key "a" already contains non-list
+
+    >>> # Dicts
+    >>> parse_kwargs(["a.x=3"])
+    {'a': {'x': 3}}
+    >>> parse_kwargs(["a.x=3", ".y=foo"])
+    {'a': {'x': 3, 'y': 'foo'}}
+    >>> parse_kwargs(["a.x=3", ".y=foo", "b.z=5", ".w=6", "a.z=7"])
+    {'a': {'x': 3, 'y': 'foo', 'z': 7}, 'b': {'z': 5, 'w': 6}}
+    >>> parse_kwargs(["a=3", ".y=foo"])
+    Traceback (most recent call last):
+        ...
+    ValueError: No previous base at ".y=foo"
+    >>> parse_kwargs(["a,=3", ".y=foo"])
+    Traceback (most recent call last):
+        ...
+    ValueError: Key "a" already contains non-dict
+    >>> parse_kwargs(["a-b.x-y=3", ".z=foo"])
+    {'a_b': {'x_y': 3, 'z': 'foo'}}
+    """
     def parse_key(key):
         key = key.replace('-', '_')
 
