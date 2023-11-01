@@ -15,8 +15,8 @@ def main():
     plot = build_plot(args)
 
     if args.output is None:
-        # In a not-yet-released plotnine, `(...).draw(show=True)` will work for
-        # this.
+        # In current plotnine, `(...).draw(show=True)` will work for this. But
+        # no need to lose backwards compatibility.
         str(plot)
     else:
         # Note: generates `PlotnineWarning`s that we probably want to suppress.
@@ -268,25 +268,31 @@ def parse_kwargs(kwargs):
                 raise ValueError(f'Key "{base}" already contains non-list')
             context.append(val)
 
-        if key[0] == 'plain-key':
-            ret[key[1]] = val
-            implicit_base = None
-        elif key[0] == 'dict-key':
-            set_dict(key[1], key[2])
-            implicit_base = key[1]
-        elif key[0] == 'list-append':
-            set_list(key[1])
-            implicit_base = key[1]
-        elif key[0] == 'implicit-dict-key':
-            if implicit_base is None:
-                raise ValueError(f'No previous base at "{arg}"')
-            set_dict(implicit_base, key[1])
-        elif key[0] == 'implicit-list-append':
-            if implicit_base is None:
-                raise ValueError(f'No previous base at "{arg}"')
-            set_list(implicit_base)
-        else:
-            raise RuntimeError('Bad parsed key')
+        match key:
+            case ('plain-key', name):
+                ret[name] = val
+                implicit_base = None
+
+            case ('dict-key', outer, inner):
+                set_dict(outer, inner)
+                implicit_base = key[1]
+
+            case ('list-append', name):
+                set_list(name)
+                implicit_base = name
+
+            case ('implicit-dict-key', inner):
+                if implicit_base is None:
+                    raise ValueError(f'No previous base at "{arg}"')
+                set_dict(implicit_base, inner)
+
+            case ('implicit-list-append',):
+                if implicit_base is None:
+                    raise ValueError(f'No previous base at "{arg}"')
+                set_list(implicit_base)
+
+            case _:
+                raise RuntimeError('Bad parsed key')
 
     return ret
 
