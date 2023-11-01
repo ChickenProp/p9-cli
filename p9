@@ -25,6 +25,9 @@ def main():
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--debug', action='store_true',
+                        help='Try to print python code to build plot')
+
     dataset_group = parser.add_mutually_exclusive_group()
     dataset_group.add_argument('--dataset',
                                help='Use a built-in plotnine dataset')
@@ -53,7 +56,7 @@ def parse_command_line(argv):
         help='Add an annotation to the plot (see plotnine.annotate)')
     pgrp.add_argument('--scale', action='append', nargs='+',
                       metavar=('SCALE', 'ARG=VAL'),
-        help='Add an annotation to the plot (see plotnine.scales)')
+        help='Add a scale to the plot (see plotnine.scales)')
     pgrp.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'),
         help='Add faceting to the plot (see plotnine.facets)')
     pgrp.add_argument('--theme', '-t', action='append', nargs='+',
@@ -84,6 +87,10 @@ def parse_command_line(argv):
 def build_plot(args):
     ensure_imports()
 
+    def debug_print(*vals):
+        if args.debug:
+            print(*vals, file=sys.stderr)
+
     def get_p9(group, name):
         name = name.replace('-', '_')
         return getattr(p9, f'{group}_{name}')
@@ -101,42 +108,76 @@ def build_plot(args):
     if args.dump_csv is not None:
         data.to_csv(path_or_buf=sys.stderr, **parse_kwargs(args.dump_csv))
 
-    mapping = p9.aes(**parse_kwargs(args.mapping))
+    mapping_args = parse_kwargs(args.mapping)
+    mapping = p9.aes(**mapping_args)
+    debug_print(f'p9.ggplot(<data>, {format_kwargs(mapping_args)})')
 
     plot = p9.ggplot(data, mapping)
 
+    def add_to_plot(callable, posargs, kwargs, name):
+        nonlocal plot
+
+        formatted_posargs = \
+            ', '.join(repr(x) for x in posargs) if len(posargs) else None
+        formatted_kwargs = \
+            format_kwargs(kwargs) if len(kwargs) else None
+        formatted_allargs = \
+            ', '.join(x for x in [formatted_posargs, formatted_kwargs]
+                      if x is not None)
+        debug_print(f'  + p9.{name}({formatted_allargs})')
+
+        plot += callable(*posargs, **kwargs)
+
     for x in args.geom or []:
-        plot += get_p9('geom', x[0])(**parse_layer_kwargs(x[1:]))
+        add_to_plot(get_p9('geom', x[0]),
+                    [],
+                    parse_layer_kwargs(x[1:]),
+                    f'geom_{x[0]}')
     for x in args.stat or []:
-        plot += get_p9('stat', x[0])(**parse_layer_kwargs(x[1:]))
+        add_to_plot(get_p9('stat', x[0]),
+                    [],
+                    parse_layer_kwargs(x[1:]),
+                    f'stat_{x[0]}')
     for x in args.ann or []:
-        plot += p9.annotate(x[0].replace('-', '_'), **parse_kwargs(x[1:]))
+        add_to_plot(p9.annotate,
+                    [x[0].replace('-', '_')],
+                    parse_kwargs(x[1:]),
+                    'annotate')
     for x in args.scale or []:
-        plot += get_p9('scale', x[0])(**parse_scale_kwargs(x[1:]))
+        name = x[0].replace('-', '_')
+        add_to_plot(get_p9('scale', name),
+                    [],
+                    parse_scale_kwargs(x[1:]),
+                    f'scale_{name}')
 
     for x in args.theme or []:
         # We support both named themes (`-t xkcd stroke_size=5`)...
         if '=' not in x[0]:
-            plot += get_p9('theme', x[0])(**parse_kwargs(x[1:]))
+            add_to_plot(get_p9('theme', x[0]),
+                        [],
+                        parse_kwargs(x[1:]),
+                        f'theme_{x[0]}')
 
         # ...and fully custom themes (`-t plot_margin=0.2`)
         else:
-            plot += p9.theme(**parse_kwargs(x))
+            add_to_plot(p9.theme, [], parse_kwargs(x), 'theme')
 
     if args.facet is not None:
-        plot += get_p9('facet', args.facet[0])(**parse_kwargs(args.facet[1:]))
+        add_to_plot(get_p9('facet', args.facet[0]),
+                    [],
+                    parse_kwargs(args.facet[1:]),
+                    f'facet_{args.facet[0]}')
 
-    more_parts = [
-        p9.ggtitle(args.title) if args.title is not None else None,
-        p9.xlab(args.xlab) if args.xlab is not None else None,
-        p9.ylab(args.ylab) if args.ylab is not None else None,
+    if args.title is not None:
+        add_to_plot(p9.ggtitle, [args.title], {}, 'ggtitle')
+    if args.xlab is not None:
+        add_to_plot(p9.xlab, [args.xlab], {}, 'xlab')
+    if args.ylab is not None:
+        add_to_plot(p9.ylab, [args.ylab], {}, 'ylab')
 
-        # Default geom, only if no geom or stat provided.
-        p9.geom_point() if not args.geom and not args.stat else None
-    ]
-
-    # `plot += [...]` doesn't work, but `plot = plot + [...]` does
-    plot = plot + [x for x in more_parts if x is not None]
+    # Default geom, only if no geom or stat provided.
+    if not args.geom and not args.stat:
+        add_to_plot(p9.geom_point, [], {}, 'geom_point')
 
     return plot
 
@@ -295,6 +336,16 @@ def parse_kwargs(kwargs):
                 raise RuntimeError('Bad parsed key')
 
     return ret
+
+def format_kwargs(kwargs):
+    """Format a dict as kwargs, for printing.
+
+    >>> format_kwargs({'x': 3})
+    'x=3'
+    >>> format_kwargs({'x': 3, 'y': 'foo', 'z': True})
+    "x=3, y='foo', z=True"
+    """
+    return ', '.join(f'{k}={v!r}' for k,v in kwargs.items())
 
 def ensure_imports():
     """Make sure all the imports we need are available."""

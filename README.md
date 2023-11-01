@@ -20,6 +20,7 @@ usage: p9 [-h]
 
 optional arguments:
   -h, --help            show this help message and exit
+  --debug               Try to print python code to build plot
   --dataset DATASET     Use a built-in plotnine dataset
   --input FILE, -i FILE
                         Read data from FILE
