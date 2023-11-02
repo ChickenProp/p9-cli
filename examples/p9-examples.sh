@@ -17,14 +17,11 @@ $P9 --dataset=mpg x='factor(cyl)' fill=drv \
 
 # Smoothed conditional means, similar to
 # https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_smooth.html#smoothed-conditional-means
-# We adjust the right margin to make more space for the legend. With -o the size
-# gets expanded anyway, but it improves the windowed render.
 
 $P9 --dataset mpg x=displ y=hwy color=drv \
     -g point -s smooth method=lm \
     --xlab displacement --ylab 'mpg (highway)' \
     --scale color-discrete name=drive \
-    -t subplots-adjust.right=0.85 \
     -o smoothed-conditional-means.png
 
 # Faceting, similar to
@@ -45,8 +42,7 @@ cat owid-covid-data.csv \
           -g line \
           --scale color-brewer type=qual palette=Paired \
           --scale x-date date-breaks='3 months' \
-          --csv dtype.date=datetime64 \
-          -t subplots-adjust.right=0.8 \
+          --csv 'dtype.date=datetime64[ns]' \
           -o time-series.png
 
 # Change in rank, similar to
@@ -89,5 +85,5 @@ cat owid-covid-data.csv \
           -t void \
           -t figure_size,=4.3 ,=6 \
           --title 'Ranked confirmed covid cases per million' \
-          --csv dtype.date=datetime64 \
+          --csv 'dtype.date=datetime64[ns]' \
           -o change-in-rank.png
