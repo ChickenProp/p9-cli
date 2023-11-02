@@ -91,6 +91,9 @@ def build_plot(args):
         if args.debug:
             print(*vals, file=sys.stderr)
 
+    def addable(callable, posargs, kwargs):
+        return DebugAddable(args.debug, callable, posargs, kwargs)
+
     def get_p9(group, name):
         name = name.replace('-', '_')
         return getattr(p9, f'{group}_{name}')
@@ -110,74 +113,47 @@ def build_plot(args):
 
     mapping_args = parse_kwargs(args.mapping)
     mapping = p9.aes(**mapping_args)
-    debug_print(f'p9.ggplot(<data>, {format_kwargs(mapping_args)})')
+    debug_print(f'p9.ggplot(<data>, {format_arglist([], mapping_args)})')
 
     plot = p9.ggplot(data, mapping)
 
-    def add_to_plot(callable, posargs, kwargs, name):
-        nonlocal plot
-
-        formatted_posargs = \
-            ', '.join(repr(x) for x in posargs) if len(posargs) else None
-        formatted_kwargs = \
-            format_kwargs(kwargs) if len(kwargs) else None
-        formatted_allargs = \
-            ', '.join(x for x in [formatted_posargs, formatted_kwargs]
-                      if x is not None)
-        debug_print(f'  + p9.{name}({formatted_allargs})')
-
-        plot += callable(*posargs, **kwargs)
-
     for x in args.geom or []:
-        add_to_plot(get_p9('geom', x[0]),
-                    [],
-                    parse_layer_kwargs(x[1:]),
-                    f'geom_{x[0]}')
+        plot += addable(get_p9('geom', x[0]), [], parse_layer_kwargs(x[1:]))
     for x in args.stat or []:
-        add_to_plot(get_p9('stat', x[0]),
-                    [],
-                    parse_layer_kwargs(x[1:]),
-                    f'stat_{x[0]}')
+        plot += addable(get_p9('stat', x[0]), [], parse_layer_kwargs(x[1:]))
     for x in args.ann or []:
-        add_to_plot(p9.annotate,
-                    [x[0].replace('-', '_')],
-                    parse_kwargs(x[1:]),
-                    'annotate')
+        plot += addable(p9.annotate,
+                        [x[0].replace('-', '_')],
+                        parse_kwargs(x[1:]))
     for x in args.scale or []:
-        name = x[0].replace('-', '_')
-        add_to_plot(get_p9('scale', name),
-                    [],
-                    parse_scale_kwargs(x[1:]),
-                    f'scale_{name}')
+        plot += addable(get_p9('scale', x[0].replace('-', '_')),
+                        [],
+                        parse_scale_kwargs(x[1:]))
 
     for x in args.theme or []:
         # We support both named themes (`-t xkcd stroke_size=5`)...
         if '=' not in x[0]:
-            add_to_plot(get_p9('theme', x[0]),
-                        [],
-                        parse_kwargs(x[1:]),
-                        f'theme_{x[0]}')
+            plot += addable(get_p9('theme', x[0]), [], parse_kwargs(x[1:]))
 
         # ...and fully custom themes (`-t plot_margin=0.2`)
         else:
-            add_to_plot(p9.theme, [], parse_kwargs(x), 'theme')
+            plot += addable(p9.theme, [], parse_kwargs(x))
 
     if args.facet is not None:
-        add_to_plot(get_p9('facet', args.facet[0]),
-                    [],
-                    parse_kwargs(args.facet[1:]),
-                    f'facet_{args.facet[0]}')
+        plot += addable(get_p9('facet', args.facet[0]),
+                        [],
+                        parse_kwargs(args.facet[1:]))
 
     if args.title is not None:
-        add_to_plot(p9.ggtitle, [args.title], {}, 'ggtitle')
+        plot += addable(p9.ggtitle, [args.title], {})
     if args.xlab is not None:
-        add_to_plot(p9.xlab, [args.xlab], {}, 'xlab')
+        plot += addable(p9.xlab, [args.xlab], {})
     if args.ylab is not None:
-        add_to_plot(p9.ylab, [args.ylab], {}, 'ylab')
+        plot += addable(p9.ylab, [args.ylab], {})
 
     # Default geom, only if no geom or stat provided.
     if not args.geom and not args.stat:
-        add_to_plot(p9.geom_point, [], {}, 'geom_point')
+        plot += addable(p9.geom_point, [], {})
 
     return plot
 
@@ -337,15 +313,42 @@ def parse_kwargs(kwargs):
 
     return ret
 
-def format_kwargs(kwargs):
-    """Format a dict as kwargs, for printing.
+def format_arglist(posargs, kwargs):
+    """Format an argument list, which may contain positional and/or keyword
+    arguments, for printing.
 
-    >>> format_kwargs({'x': 3})
+    >>> format_arglist([], {})
+    ''
+    >>> format_arglist([3], {})
+    '3'
+    >>> format_arglist([3, 'four'], {})
+    "3, 'four'"
+    >>> format_arglist([], {'x': 3})
     'x=3'
-    >>> format_kwargs({'x': 3, 'y': 'foo', 'z': True})
-    "x=3, y='foo', z=True"
+    >>> format_arglist([1], {'x': 3, 'y': 'foo', 'z': True})
+    "1, x=3, y='foo', z=True"
     """
-    return ', '.join(f'{k}={v!r}' for k,v in kwargs.items())
+    formatted_posargs = [repr(x) for x in posargs]
+    formatted_kwargs = [f'{k}={v!r}' for k,v in kwargs.items()]
+
+    return ', '.join(formatted_posargs + formatted_kwargs)
+
+class DebugAddable:
+    """Class used to help add things to plots with debug printing."""
+    def __init__(self, debug, callable, posargs, kwargs):
+        self.debug = debug
+        self.callable = callable
+        self.posargs = posargs
+        self.kwargs = kwargs
+
+    def __radd__(self, plot):
+        if self.debug:
+            name = self.callable.__name__
+            print(f'  + p9.{name}({format_arglist(self.posargs, self.kwargs)})',
+                  file=sys.stderr)
+
+        self.callable(*self.posargs, **self.kwargs).__radd__(plot)
+        return plot
 
 def ensure_imports():
     """Make sure all the imports we need are available."""
