@@ -1,5 +1,3 @@
 p9.ggplot(<data>, x='factor(cyl)', fill='drv')
   + p9.geom_bar(position='fill')
   + p9.geom_text(mapping={'label': after_stat('count')}, stat='count', position='fill')
-/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:587: PlotnineWarning: Saving 6.4 x 4.8 in image.
-/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:588: PlotnineWarning: Filename: stacked-bar-plot.png

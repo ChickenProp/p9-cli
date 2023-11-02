@@ -4,5 +4,3 @@ p9.ggplot(<data>, x='displ', y='hwy', color='drv')
   + p9.scale_color_hue(name='drive')
   + p9.xlab('displacement')
   + p9.ylab('mpg (highway)')
-/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:587: PlotnineWarning: Saving 6.4 x 4.8 in image.
-/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:588: PlotnineWarning: Filename: smoothed-conditional-means.png

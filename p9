@@ -19,8 +19,8 @@ def main():
         # no need to lose backwards compatibility.
         str(plot)
     else:
-        # Note: generates `PlotnineWarning`s that we probably want to suppress.
-        plot.save(args.output[0], **parse_kwargs(args.output[1:]))
+        save_args = {'verbose': False, **parse_kwargs(args.output[1:])}
+        plot.save(args.output[0], **save_args)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()

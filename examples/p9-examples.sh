@@ -92,5 +92,5 @@ cat owid-covid-data.csv \
           -t figure_size,=4.3 ,=6 \
           --title 'Ranked confirmed covid cases per million' \
           --csv 'dtype.date=datetime64[ns]' \
-          -o change-in-rank.png \
+          -o change-in-rank.png verbose=y \
           --debug 2> change-in-rank.stderr.txt
