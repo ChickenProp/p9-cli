@@ -1,0 +1,6 @@
+p9.ggplot(<data>, x='date', y='total_cases_per_million', color='location')
+  + p9.geom_line()
+  + p9.scale_color_brewer(type='qual', palette='Paired')
+  + p9.scale_x_datetime(date_breaks='3 months')
+/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:587: PlotnineWarning: Saving 6.4 x 4.8 in image.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:588: PlotnineWarning: Filename: time-series.png

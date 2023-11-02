@@ -13,7 +13,8 @@ P9=../p9
 $P9 --dataset=mpg x='factor(cyl)' fill=drv \
     -g bar position=fill \
     -g text mapping.label=..count.. stat=count position=fill \
-    -o stacked-bar-plot.png
+    -o stacked-bar-plot.png \
+    --debug 2> stacked-bar-plot.stderr.txt
 
 # Smoothed conditional means, similar to
 # https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_smooth.html#smoothed-conditional-means
@@ -22,12 +23,16 @@ $P9 --dataset mpg x=displ y=hwy color=drv \
     -g point -s smooth method=lm \
     --xlab displacement --ylab 'mpg (highway)' \
     --scale color-discrete name=drive \
-    -o smoothed-conditional-means.png
+    -o smoothed-conditional-means.png \
+    --debug 2> smoothed-conditional-means.stderr.txt
 
 # Faceting, similar to
 # https://www.r-graph-gallery.com/223-faceting-with-ggplot2.html
 
-$P9 --dataset mtcars x=mpg y=wt -f grid facets='cyl ~ gear' -o faceting.png
+$P9 --dataset mtcars x=mpg y=wt \
+    -f grid facets='cyl ~ gear' \
+    -o faceting.png \
+    --debug 2> faceting.stderr.txt
 
 # Time series. We use grep to select twelve countries (plus the header line)
 # from the full dataset, which kind of sucks. It would be nice to use a tool
@@ -43,7 +48,8 @@ cat owid-covid-data.csv \
           --scale color-brewer type=qual palette=Paired \
           --scale x-date date-breaks='3 months' \
           --csv 'dtype.date=datetime64[ns]' \
-          -o time-series.png
+          -o time-series.png \
+          --debug 2> time-series.stderr.txt
 
 # Change in rank, similar to
 # https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_segment.html#change-in-rank
@@ -86,4 +92,5 @@ cat owid-covid-data.csv \
           -t figure_size,=4.3 ,=6 \
           --title 'Ranked confirmed covid cases per million' \
           --csv 'dtype.date=datetime64[ns]' \
-          -o change-in-rank.png
+          -o change-in-rank.png \
+          --debug 2> change-in-rank.stderr.txt

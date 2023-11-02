@@ -1,0 +1,20 @@
+p9.ggplot(<data>, )
+  + p9.geom_segment(mapping={'x': 1, 'xend': 2, 'y': 'total_cases_per_million[date=="2020-09-01"].rank()', 'yend': 'pd.Series(list(total_cases_per_million[date=="2021-03-15"].rank()), index=total_cases_per_million[date=="2020-09-01"].index)', 'color': 'location'})
+  + p9.geom_text(mapping={'x': 1, 'y': 'total_cases_per_million[date=="2020-09-01"].rank()', 'label': 'location'}, ha='right', nudge_x=-0.05, size=9)
+  + p9.geom_text(mapping={'x': 2, 'y': 'pd.Series(list(total_cases_per_million[date=="2021-03-15"].rank()), index=total_cases_per_million[date=="2020-09-01"].index)', 'label': 'location'}, ha='left', nudge_x=0.05, size=9)
+  + p9.geom_point(mapping={'x': 1, 'y': 'total_cases_per_million[date=="2020-09-01"].rank()'})
+  + p9.geom_point(mapping={'x': 2, 'y': 'pd.Series(list(total_cases_per_million[date=="2021-03-15"].rank()), index=total_cases_per_million[date=="2020-09-01"].index)'})
+  + p9.annotate('text', x=0.8, y=12.5, label='Rank 01-Sep-2020', size=8)
+  + p9.annotate('text', x=2.2, y=12.5, label='Rank 15-Mar-2021', size=8)
+  + p9.scale_x_continuous(limits=(0.25, 2.75))
+  + p9.scale_color_brewer(type='qual', palette='Paired', guide=False)
+  + p9.theme_void()
+  + p9.theme(figure_size=[4.3, 6])
+  + p9.ggtitle('Ranked confirmed covid cases per million')
+/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:587: PlotnineWarning: Saving 4.3 x 6 in image.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/ggplot.py:588: PlotnineWarning: Filename: change-in-rank.png
+/home/phil/.local/lib/python3.11/site-packages/plotnine/layer.py:364: PlotnineWarning: geom_segment : Removed 4973 rows containing missing values.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/layer.py:364: PlotnineWarning: geom_text : Removed 4973 rows containing missing values.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/layer.py:364: PlotnineWarning: geom_text : Removed 4973 rows containing missing values.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/layer.py:364: PlotnineWarning: geom_point : Removed 4973 rows containing missing values.
+/home/phil/.local/lib/python3.11/site-packages/plotnine/layer.py:364: PlotnineWarning: geom_point : Removed 4973 rows containing missing values.
