@@ -4,6 +4,7 @@ It's a command line interface to [plotnine](https://plotnine.readthedocs.io/en/s
 
 ```
 usage: p9 [-h]
+          [--debug]
           [--dataset DATASET | --input FILE]
           [--csv ARG=VAL [ARG=VAL ...]]
           [--output FILE [ARG=VAL ...]]
@@ -16,7 +17,7 @@ usage: p9 [-h]
           [--xlab XLAB]
           [--ylab YLAB]
           [--title TITLE]
-          [mapping [mapping ...]]
+          [mapping ...]
 
 optional arguments:
   -h, --help            show this help message and exit
