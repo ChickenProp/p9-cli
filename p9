@@ -232,6 +232,16 @@ def parse_scale_kwargs(kwargs):
     return kwargs
 
 
+class KWArgError(Exception):
+    def __init__(self, message, arg):
+        super().__init__(message)
+        self.message = message
+        self.arg = arg
+
+    def __str__(self):
+        return f"{self.message}\n  in argument: {self.arg!r}"
+
+
 def parse_kwargs(kwargs):
     """Parse a list of `key=val` strings into a string-keyed dictionary.
 
@@ -265,11 +275,13 @@ def parse_kwargs(kwargs):
     >>> parse_kwargs(["a=3", ",=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: No previous base at ',=foo'
+    p9.KWArgError: No previous base
+      in argument: ',=foo'
     >>> parse_kwargs(["a.x=3", ",=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: Key "a" already contains non-list
+    p9.KWArgError: Key 'a' already contains non-list
+      in argument: ',=foo'
     >>> parse_kwargs(["a+=1,2,3", ",=4", "+=5,6"])
     {'a': [1, 2, 3, 4, 5, 6]}
 
@@ -283,11 +295,13 @@ def parse_kwargs(kwargs):
     >>> parse_kwargs(["a=3", ".y=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: No previous base at '.y=foo'
+    p9.KWArgError: No previous base
+      in argument: '.y=foo'
     >>> parse_kwargs(["a,=3", ".y=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: Key "a" already contains non-dict
+    p9.KWArgError: Key 'a' already contains non-dict
+      in argument: '.y=foo'
     >>> parse_kwargs(["a-b.x-y=3", ".z=foo"])
     {'a_b': {'x_y': 3, 'z': 'foo'}}
     """
@@ -310,7 +324,7 @@ def parse_kwargs(kwargs):
         elif key == "+":
             return ("implicit-list-extend",)
         else:
-            raise ValueError(f'bad key: "{key}"')
+            raise ValueError(f"bad key: {key!r}")
 
     def parse_val(v):
         if v.startswith(":"):
@@ -344,19 +358,19 @@ def parse_kwargs(kwargs):
         def set_dict(base, sub):
             context = ret.setdefault(base, {})
             if not isinstance(context, dict):
-                raise ValueError(f'Key "{base}" already contains non-dict')
+                raise KWArgError(f"Key {base!r} already contains non-dict", arg)
             context[sub] = val
 
         def append_list(base):
             context = ret.setdefault(base, [])
             if not isinstance(context, list):
-                raise ValueError(f'Key "{base}" already contains non-list')
+                raise KWArgError(f"Key {base!r} already contains non-list", arg)
             context.append(val)
 
         def extend_list(base):
             context = ret.setdefault(base, [])
             if not isinstance(context, list):
-                raise ValueError(f'Key "{base}" already contains non-list')
+                raise KWArgError(f"Key {base!r} already contains non-list", arg)
             context.extend(val)
 
         # We could be lenient here. E.g. we could allow
@@ -369,12 +383,15 @@ def parse_kwargs(kwargs):
         # strict for now.
         if key[0] in ("list-extend", "implicit-list-extend"):
             if not isinstance(val, list):
-                raise ValueError(
-                    "+= requires a list-typed value. You may want ,= instead"
+                raise KWArgError(
+                    "+= requires a list-typed value. You may want ,= instead",
+                    arg,
                 )
         else:
             if isinstance(val, list):
-                raise ValueError("List-typed values may only be used with +=")
+                raise KWArgError(
+                    "List-typed values may only be used with +=", arg
+                )
 
         match key:
             case ("plain-key", name):
@@ -395,20 +412,21 @@ def parse_kwargs(kwargs):
 
             case ("implicit-dict-key", inner):
                 if implicit_base is None:
-                    raise ValueError(f"No previous base at {arg!r}")
+                    raise KWArgError("No previous base", arg)
                 set_dict(implicit_base, inner)
 
             case ("implicit-list-append",):
                 if implicit_base is None:
-                    raise ValueError(f"No previous base at {arg!r}")
+                    raise KWArgError("No previous base", arg)
                 append_list(implicit_base)
 
             case ("implicit-list-extend",):
                 if implicit_base is None:
-                    raise ValueError(f"No previous base at {arg!r}")
+                    raise KWArgError("No previous base", arg)
                 extend_list(implicit_base)
 
             case _:
+                # This is a bug in p9, not a user error.
                 raise RuntimeError(f"Bad parsed key: {key} at {arg!r}")
 
     return ret
