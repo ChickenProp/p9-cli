@@ -10,6 +10,7 @@ p9 = None
 pandas = None
 _done_imports = False
 
+
 def main():
     args = parse_command_line(sys.argv[1:])
     plot = build_plot(args)
@@ -19,70 +20,122 @@ def main():
         # no need to lose backwards compatibility.
         str(plot)
     else:
-        save_args = {'verbose': False, **parse_kwargs(args.output[1:])}
+        save_args = {"verbose": False, **parse_kwargs(args.output[1:])}
         plot.save(args.output[0], **save_args)
+
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--debug', action='store_true',
-                        help='Try to print python code to build plot')
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Try to print python code to build plot",
+    )
 
     dataset_group = parser.add_mutually_exclusive_group()
-    dataset_group.add_argument('--dataset',
-                               help='Use a built-in plotnine dataset')
-    dataset_group.add_argument('--input', '-i', metavar='FILE',
-                               help='Read data from FILE')
+    dataset_group.add_argument(
+        "--dataset", help="Use a built-in plotnine dataset"
+    )
+    dataset_group.add_argument(
+        "--input", "-i", metavar="FILE", help="Read data from FILE"
+    )
 
-    parser.add_argument('--csv', nargs='+', metavar='ARG=VAL',
-                        help='Configure csv parsing (see pandas.read_csv)')
+    parser.add_argument(
+        "--csv",
+        nargs="+",
+        metavar="ARG=VAL",
+        help="Configure csv parsing (see pandas.read_csv)",
+    )
 
-    parser.add_argument('--output', '-o', nargs='+',
-                        metavar=('FILE', 'ARG=VAL'),
-                        help='Save output to FILE (see plotnine.ggplot.save)')
+    parser.add_argument(
+        "--output",
+        "-o",
+        nargs="+",
+        metavar=("FILE", "ARG=VAL"),
+        help="Save output to FILE (see plotnine.ggplot.save)",
+    )
 
-    parser.add_argument('--dump-csv', nargs='*',
-        help='Print dataset as CSV to stderr (see pandas.DataFrame.to_csv)')
+    parser.add_argument(
+        "--dump-csv",
+        nargs="*",
+        help="Print dataset as CSV to stderr (see pandas.DataFrame.to_csv)",
+    )
 
-    pgrp = parser.add_argument_group('Plot elements')
-    pgrp.add_argument('--geom', '-g', action='append', nargs='+',
-                      metavar=('GEOM', 'ARG=VAL'),
-        help='Add a geom to the plot (see plotnine.geoms)')
-    pgrp.add_argument('--stat', '-s', action='append', nargs='+',
-                      metavar=('STAT', 'ARG=VAL'),
-        help='Add a stat to the plot (see plotnine.stats)')
-    pgrp.add_argument('--ann', action='append', nargs='+',
-                      metavar=('GEOM', 'ARG=VAL'),
-        help='Add an annotation to the plot (see plotnine.annotate)')
-    pgrp.add_argument('--scale', action='append', nargs='+',
-                      metavar=('SCALE', 'ARG=VAL'),
-        help='Add a scale to the plot (see plotnine.scales)')
-    pgrp.add_argument('--facet', '-f', nargs='+', metavar=('TYPE', 'ARG=VAL'),
-        help='Add faceting to the plot (see plotnine.facets)')
-    pgrp.add_argument('--theme', '-t', action='append', nargs='+',
-                      metavar=('[NAME]', 'ARG=VAL'),
-        help='''With NAME, apply a built-in theme to the plot;
-                without, customize the theme (see plotnine.themes)''')
-    pgrp.add_argument('--xlab',
-        help='Add an x-axis label to the plot (see plotnine.xlab)')
-    pgrp.add_argument('--ylab',
-        help='Add a y-axis label to the plot (see plotnine.ylab)')
-    pgrp.add_argument('--title',
-        help='Add a title to the plot (see plotnine.ggtitle)')
-    pgrp.add_argument('mapping', nargs='*',
-        help='''Add an aesthetic mapping to the plot
-                (see plotnine.ggplot, plotnine.aes)''')
+    pgrp = parser.add_argument_group("Plot elements")
+    pgrp.add_argument(
+        "--geom",
+        "-g",
+        action="append",
+        nargs="+",
+        metavar=("GEOM", "ARG=VAL"),
+        help="Add a geom to the plot (see plotnine.geoms)",
+    )
+    pgrp.add_argument(
+        "--stat",
+        "-s",
+        action="append",
+        nargs="+",
+        metavar=("STAT", "ARG=VAL"),
+        help="Add a stat to the plot (see plotnine.stats)",
+    )
+    pgrp.add_argument(
+        "--ann",
+        action="append",
+        nargs="+",
+        metavar=("GEOM", "ARG=VAL"),
+        help="Add an annotation to the plot (see plotnine.annotate)",
+    )
+    pgrp.add_argument(
+        "--scale",
+        action="append",
+        nargs="+",
+        metavar=("SCALE", "ARG=VAL"),
+        help="Add a scale to the plot (see plotnine.scales)",
+    )
+    pgrp.add_argument(
+        "--facet",
+        "-f",
+        nargs="+",
+        metavar=("TYPE", "ARG=VAL"),
+        help="Add faceting to the plot (see plotnine.facets)",
+    )
+    pgrp.add_argument(
+        "--theme",
+        "-t",
+        action="append",
+        nargs="+",
+        metavar=("[NAME]", "ARG=VAL"),
+        help="""With NAME, apply a built-in theme to the plot;
+                without, customize the theme (see plotnine.themes)""",
+    )
+    pgrp.add_argument(
+        "--xlab", help="Add an x-axis label to the plot (see plotnine.xlab)"
+    )
+    pgrp.add_argument(
+        "--ylab", help="Add a y-axis label to the plot (see plotnine.ylab)"
+    )
+    pgrp.add_argument(
+        "--title", help="Add a title to the plot (see plotnine.ggtitle)"
+    )
+    pgrp.add_argument(
+        "mapping",
+        nargs="*",
+        help="""Add an aesthetic mapping to the plot
+                (see plotnine.ggplot, plotnine.aes)""",
+    )
 
     args = parser.parse_args(argv)
 
     # argparse doesn't seem to let us group things to handle this automatically.
     if args.dataset is not None and args.csv is not None:
-        parser.error('argument --csv: not allowed with argument --dataset')
+        parser.error("argument --csv: not allowed with argument --dataset")
 
     if args.dataset is None and args.input is None:
-        args.input = '-'
+        args.input = "-"
 
     return args
+
 
 def build_plot(args):
     ensure_imports()
@@ -95,17 +148,18 @@ def build_plot(args):
         return DebugAddable(args.debug, callable, posargs, kwargs)
 
     def get_p9(group, name):
-        name = name.replace('-', '_')
-        return getattr(p9, f'{group}_{name}')
+        name = name.replace("-", "_")
+        return getattr(p9, f"{group}_{name}")
 
     if args.input is not None:
-        file = args.input if args.input != '-' else sys.stdin
+        file = args.input if args.input != "-" else sys.stdin
         kwargs = parse_kwargs(args.csv or [])
-        kwargs.setdefault('sep', None)
-        kwargs.setdefault('engine', 'python')
+        kwargs.setdefault("sep", None)
+        kwargs.setdefault("engine", "python")
         data = pd.read_csv(file, **kwargs)
     else:
         import plotnine.data
+
         data = getattr(plotnine.data, args.dataset)
 
     if args.dump_csv is not None:
@@ -116,36 +170,38 @@ def build_plot(args):
 
     # If `mapping_args` is empty, this is just `p9.ggplot(<data>, )`. But that's
     # actually valid syntax, so it's fine.
-    debug_print(f'p9.ggplot(<data>, {format_arglist([], mapping_args)})')
+    debug_print(f"p9.ggplot(<data>, {format_arglist([], mapping_args)})")
 
     plot = p9.ggplot(data, mapping)
 
     for x in args.geom or []:
-        plot += addable(get_p9('geom', x[0]), [], parse_layer_kwargs(x[1:]))
+        plot += addable(get_p9("geom", x[0]), [], parse_layer_kwargs(x[1:]))
     for x in args.stat or []:
-        plot += addable(get_p9('stat', x[0]), [], parse_layer_kwargs(x[1:]))
+        plot += addable(get_p9("stat", x[0]), [], parse_layer_kwargs(x[1:]))
     for x in args.ann or []:
-        plot += addable(p9.annotate,
-                        [x[0].replace('-', '_')],
-                        parse_kwargs(x[1:]))
+        plot += addable(
+            p9.annotate, [x[0].replace("-", "_")], parse_kwargs(x[1:])
+        )
     for x in args.scale or []:
-        plot += addable(get_p9('scale', x[0].replace('-', '_')),
-                        [],
-                        parse_scale_kwargs(x[1:]))
+        plot += addable(
+            get_p9("scale", x[0].replace("-", "_")),
+            [],
+            parse_scale_kwargs(x[1:]),
+        )
 
     for x in args.theme or []:
         # We support both named themes (`-t xkcd stroke_size=5`)...
-        if '=' not in x[0]:
-            plot += addable(get_p9('theme', x[0]), [], parse_kwargs(x[1:]))
+        if "=" not in x[0]:
+            plot += addable(get_p9("theme", x[0]), [], parse_kwargs(x[1:]))
 
         # ...and fully custom themes (`-t plot_margin=0.2`)
         else:
             plot += addable(p9.theme, [], parse_kwargs(x))
 
     if args.facet is not None:
-        plot += addable(get_p9('facet', args.facet[0]),
-                        [],
-                        parse_kwargs(args.facet[1:]))
+        plot += addable(
+            get_p9("facet", args.facet[0]), [], parse_kwargs(args.facet[1:])
+        )
 
     if args.title is not None:
         plot += addable(p9.ggtitle, [args.title], {})
@@ -160,18 +216,21 @@ def build_plot(args):
 
     return plot
 
+
 def parse_layer_kwargs(kwargs):
     ensure_imports()
     kwargs = parse_kwargs(kwargs)
-    if 'mapping' in kwargs:
-        kwargs['mapping'] = p9.aes(**kwargs['mapping'])
+    if "mapping" in kwargs:
+        kwargs["mapping"] = p9.aes(**kwargs["mapping"])
     return kwargs
+
 
 def parse_scale_kwargs(kwargs):
     kwargs = parse_kwargs(kwargs)
-    if 'min' in kwargs or 'max' in kwargs:
-        kwargs['limits'] = ( kwargs.pop('min', None), kwargs.pop('max', None) )
+    if "min" in kwargs or "max" in kwargs:
+        kwargs["limits"] = (kwargs.pop("min", None), kwargs.pop("max", None))
     return kwargs
+
 
 def parse_kwargs(kwargs):
     """Parse a list of `key=val` strings into a string-keyed dictionary.
@@ -232,42 +291,43 @@ def parse_kwargs(kwargs):
     >>> parse_kwargs(["a-b.x-y=3", ".z=foo"])
     {'a_b': {'x_y': 3, 'z': 'foo'}}
     """
-    def parse_key(key):
-        key = key.replace('-', '_')
 
-        if re.match(r'^\w+$', key):
-            return ('plain-key', key)
-        elif match := re.match(r'^(\w+)\.(\w+)$', key):
-            return ('dict-key', match.group(1), match.group(2))
-        elif match := re.match(r'^\.(\w+)$', key):
-            return ('implicit-dict-key', match.group(1))
-        elif match := re.match(r'^(\w+),$', key):
-            return ('list-append', match.group(1))
-        elif key == ',':
-            return ('implicit-list-append',)
-        elif match := re.match(r'^(\w+)\+$', key):
-            return ('list-extend', match.group(1))
-        elif key == '+':
-            return ('implicit-list-extend',)
+    def parse_key(key):
+        key = key.replace("-", "_")
+
+        if re.match(r"^\w+$", key):
+            return ("plain-key", key)
+        elif match := re.match(r"^(\w+)\.(\w+)$", key):
+            return ("dict-key", match.group(1), match.group(2))
+        elif match := re.match(r"^\.(\w+)$", key):
+            return ("implicit-dict-key", match.group(1))
+        elif match := re.match(r"^(\w+),$", key):
+            return ("list-append", match.group(1))
+        elif key == ",":
+            return ("implicit-list-append",)
+        elif match := re.match(r"^(\w+)\+$", key):
+            return ("list-extend", match.group(1))
+        elif key == "+":
+            return ("implicit-list-extend",)
         else:
             raise ValueError(f'bad key: "{key}"')
 
     def parse_val(v):
-        if v.startswith(':'):
+        if v.startswith(":"):
             return v[1:]
         elif (range_val := parse_range(v)) is not None:
             return range_val
-        elif ',' in v:
-            return [parse_simple_val(x) for x in v.split(',')]
+        elif "," in v:
+            return [parse_simple_val(x) for x in v.split(",")]
         else:
             return parse_simple_val(v)
 
     def parse_simple_val(v):
-        if (v == '-'):
+        if v == "-":
             return None
-        elif (v == 'y'):
+        elif v == "y":
             return True
-        elif (v == 'n'):
+        elif v == "n":
             return False
         try:
             return parse_num(v)
@@ -277,7 +337,7 @@ def parse_kwargs(kwargs):
     ret = {}
     implicit_base = None
     for arg in kwargs:
-        (key, val) = arg.split('=', 1)
+        (key, val) = arg.split("=", 1)
         key = parse_key(key)
         val = parse_val(val)
 
@@ -307,51 +367,52 @@ def parse_kwargs(kwargs):
         # But I want to extend to being able to create more complicted
         # structures, and then edge case behavior might want to change. So being
         # strict for now.
-        if key[0] in ('list-extend', 'implicit-list-extend'):
+        if key[0] in ("list-extend", "implicit-list-extend"):
             if not isinstance(val, list):
                 raise ValueError(
-                    '+= requires a list-typed value. You may want ,= instead'
+                    "+= requires a list-typed value. You may want ,= instead"
                 )
         else:
             if isinstance(val, list):
-                raise ValueError('List-typed values may only be used with +=')
+                raise ValueError("List-typed values may only be used with +=")
 
         match key:
-            case ('plain-key', name):
+            case ("plain-key", name):
                 ret[name] = val
                 implicit_base = None
 
-            case ('dict-key', outer, inner):
+            case ("dict-key", outer, inner):
                 set_dict(outer, inner)
                 implicit_base = key[1]
 
-            case ('list-append', name):
+            case ("list-append", name):
                 append_list(name)
                 implicit_base = name
 
-            case ('list-extend', name):
+            case ("list-extend", name):
                 extend_list(name)
                 implicit_base = name
 
-            case ('implicit-dict-key', inner):
+            case ("implicit-dict-key", inner):
                 if implicit_base is None:
-                    raise ValueError(f'No previous base at {arg!r}')
+                    raise ValueError(f"No previous base at {arg!r}")
                 set_dict(implicit_base, inner)
 
-            case ('implicit-list-append',):
+            case ("implicit-list-append",):
                 if implicit_base is None:
-                    raise ValueError(f'No previous base at {arg!r}')
+                    raise ValueError(f"No previous base at {arg!r}")
                 append_list(implicit_base)
 
-            case ('implicit-list-extend',):
+            case ("implicit-list-extend",):
                 if implicit_base is None:
-                    raise ValueError(f'No previous base at {arg!r}')
+                    raise ValueError(f"No previous base at {arg!r}")
                 extend_list(implicit_base)
 
             case _:
-                raise RuntimeError(f'Bad parsed key: {key} at {arg!r}')
+                raise RuntimeError(f"Bad parsed key: {key} at {arg!r}")
 
     return ret
+
 
 def parse_num(v):
     """Parse a numeric string as an int or float. Raise ValueError if it's
@@ -409,10 +470,10 @@ def parse_range(range_str):
         ...
     ValueError: Ranges must be increasing
     """
-    num = r'([+-]?(?:\d+(?:\.\d+)?))'
-    ws = r'\s*'
-    op = r'\.\.(\^?)'
-    range_regex = f'^{ws}{num}{ws}(?:,{ws}{num})?{ws}{op}{ws}{num}{ws}$'
+    num = r"([+-]?(?:\d+(?:\.\d+)?))"
+    ws = r"\s*"
+    op = r"\.\.(\^?)"
+    range_regex = f"^{ws}{num}{ws}(?:,{ws}{num})?{ws}{op}{ws}{num}{ws}$"
 
     match = re.match(range_regex, range_str)
     if match is None:
@@ -429,7 +490,7 @@ def parse_range(range_str):
         range_step = 1
 
     if range_step <= 0 or range_to < range_from:
-        raise ValueError('Ranges must be increasing')
+        raise ValueError("Ranges must be increasing")
 
     low_enough = lambda x: x < range_to if range_exclusive else x <= range_to
     result = []
@@ -439,6 +500,7 @@ def parse_range(range_str):
         next_val += range_step
 
     return result
+
 
 def format_arglist(posargs, kwargs):
     """Format an argument list, which may contain positional and/or keyword
@@ -456,12 +518,14 @@ def format_arglist(posargs, kwargs):
     "1, x=3, y='foo', z=True"
     """
     formatted_posargs = [repr(x) for x in posargs]
-    formatted_kwargs = [f'{k}={v!r}' for k,v in kwargs.items()]
+    formatted_kwargs = [f"{k}={v!r}" for k, v in kwargs.items()]
 
-    return ', '.join(formatted_posargs + formatted_kwargs)
+    return ", ".join(formatted_posargs + formatted_kwargs)
+
 
 class DebugAddable:
     """Class used to help add things to plots with debug printing."""
+
     def __init__(self, debug, callable, posargs, kwargs):
         self.debug = debug
         self.callable = callable
@@ -471,11 +535,14 @@ class DebugAddable:
     def __radd__(self, plot):
         if self.debug:
             name = self.callable.__name__
-            print(f'  + p9.{name}({format_arglist(self.posargs, self.kwargs)})',
-                  file=sys.stderr)
+            print(
+                f"  + p9.{name}({format_arglist(self.posargs, self.kwargs)})",
+                file=sys.stderr,
+            )
 
         self.callable(*self.posargs, **self.kwargs).__radd__(plot)
         return plot
+
 
 def ensure_imports():
     """Make sure all the imports we need are available."""
@@ -483,9 +550,11 @@ def ensure_imports():
     if not _done_imports:
         import plotnine
         import pandas
+
         p9 = plotnine
         pd = pandas
         _done_imports = True
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
