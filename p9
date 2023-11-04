@@ -253,8 +253,15 @@ def parse_kwargs(kwargs):
             raise ValueError(f'bad key: "{key}"')
 
     def parse_val(v):
+        num = r'([+-]?(?:\d*(?:\.\d+)?))'
+        ws = r'\s*'
+        op = r'\.\.(\^?)'
+        range_regex = f'^{ws}{num}{ws}(?:,{ws}{num})?{ws}{op}{ws}{num}{ws}$'
+
         if v.startswith(':'):
             return v[1:]
+        elif (range_val := parse_range(v)) is not None:
+            return range_val
         elif ',' in v:
             return [parse_simple_val(x) for x in v.split(',')]
         else:
@@ -268,12 +275,9 @@ def parse_kwargs(kwargs):
         elif (v == 'n'):
             return False
         try:
-            return int(v)
-        except Exception as e:
-            try:
-                return float(v)
-            except Exception as e:
-                return v
+            return parse_num(v)
+        except ValueError:
+            return v
 
     ret = {}
     implicit_base = None
@@ -353,6 +357,93 @@ def parse_kwargs(kwargs):
                 raise RuntimeError(f'Bad parsed key: {key} at {arg!r}')
 
     return ret
+
+def parse_num(v):
+    """Parse a numeric string as an int or float. Raise ValueError if it's
+    neither of those."""
+    try:
+        return int(v)
+    except ValueError as e:
+        return float(v)
+
+
+def parse_range(range_str):
+    """Parse a range (as a list) out of a string. Return None if it doesn't look
+    like a range, raise a ValueError if it does but it's a range we don't like.
+
+    >>> # Successes
+    >>> parse_range('1..5')
+    [1, 2, 3, 4, 5]
+    >>> parse_range('1..^5')
+    [1, 2, 3, 4]
+    >>> parse_range('1,3..^6')
+    [1, 3, 5]
+    >>> parse_range('1,1.25..2')
+    [1, 1.25, 1.5, 1.75, 2.0]
+    >>> parse_range(' 1 , 3 .. 5 ')
+    [1, 3, 5]
+    >>> parse_range('-5,-3..5')
+    [-5, -3, -1, 1, 3, 5]
+    >>> parse_range('1..1')
+    [1]
+    >>> parse_range('1..^1')
+    []
+
+    >>> # No parse
+    >>> parse_range('foo')
+    >>> parse_range('1,2,..3')
+    >>> parse_range('1,2,3..4')
+    >>> parse_range('1,2')
+    >>> parse_range('1..')
+    >>> parse_range('..3')
+    >>> parse_range('1,..')
+    >>> parse_range('1.,2..3')
+    >>> parse_range('.1,2..3')
+
+    >>> # Errors
+    >>> parse_range('1,0..2')
+    Traceback (most recent call last):
+        ...
+    ValueError: Ranges must be increasing
+    >>> parse_range('1..0')
+    Traceback (most recent call last):
+        ...
+    ValueError: Ranges must be increasing
+    >>> parse_range('1,0..-1')
+    Traceback (most recent call last):
+        ...
+    ValueError: Ranges must be increasing
+    """
+    num = r'([+-]?(?:\d+(?:\.\d+)?))'
+    ws = r'\s*'
+    op = r'\.\.(\^?)'
+    range_regex = f'^{ws}{num}{ws}(?:,{ws}{num})?{ws}{op}{ws}{num}{ws}$'
+
+    match = re.match(range_regex, range_str)
+    if match is None:
+        return None
+
+    range_from = parse_num(match.group(1))
+    range_then = parse_num(match.group(2)) if match.group(2) else None
+    range_exclusive = bool(match.group(3))
+    range_to = parse_num(match.group(4))
+
+    if range_then is not None:
+        range_step = range_then - range_from
+    else:
+        range_step = 1
+
+    if range_step <= 0 or range_to < range_from:
+        raise ValueError('Ranges must be increasing')
+
+    low_enough = lambda x: x < range_to if range_exclusive else x <= range_to
+    result = []
+    next_val = range_from
+    while low_enough(next_val):
+        result.append(next_val)
+        next_val += range_step
+
+    return result
 
 def format_arglist(posargs, kwargs):
     """Format an argument list, which may contain positional and/or keyword

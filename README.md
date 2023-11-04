@@ -75,17 +75,26 @@ The general model is that you pass aesthetic mappings in the form `key=value` an
 
 When parsing keyword parameters, including aesthetic mappings, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation.
 
-You can insert into a dict by appending `.key` to the key, or a list by appending `,` (for single elements) or `+` (for multiple elements separated by commas), and then you can leave off the name beforehand in future. So
+You can insert into a dict by appending `.key` to the key, or a list by appending `,` (for single elements) or `+` (for multiple elements separated by commas or a numeric range), and then you can leave off the name beforehand in future. So
 
 ```
 a=3 b=4.5
   dict-val.dict-key1=y .dict-key2=:n .dict-key3=-
-  list-val,=foo ,=bar +=baz,quux
+  list-val,=foo ,=bar +=1,3 +=7..10
 ==> { 'a': 3,
       'b': 4.5,
       'dict_val': {'dict_key1': True, 'dict_key2': 'n', 'dict_key3': None},
-      'list_val': ['foo', 'bar', 'baz', 'quux']
+      'list_val': ['foo', 'bar', 1, 3, 7, 8, 9, 10]
     }
+```
+
+Ranges can be spcified in four ways:
+
+```
+from..to         Inclusive range             1..3      == [1, 2, 3]
+from,then..to    Inclusive range with step   1,1.5..3  == [1, 1.5, 2, 2.5, 3]
+from..^to        Exclusive range             1..^3     == [1, 2]
+from,then..^to   Exclusive range with step   1,1.5..^3 == [1, 1.5, 2, 2.5]
 ```
 
 There's currently no support for lists or dicts containing lists or dicts.
