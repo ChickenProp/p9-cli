@@ -63,6 +63,11 @@ cat owid-covid-data.csv \
 #
 # Some notes:
 #
+# * We need : for $M_Y2 because it has a comma in it, so p9 thinks it's a list
+#   which is forbidden without +=. We might prefer p9 not to try to parse , as a
+#   list separator unless += was specifically used. But we might also prefer it
+#   to accept lists even without +=. The error keeps options open.
+#
 # * min= and max= are p9-cli ways to set the lower and upper limits separately.
 #   Here we use them together, but `limits,=0.35 ,=2.65` would also have worked.
 #
@@ -77,13 +82,13 @@ M_Y2="pd.Series(list($(cpm 2021-03-15).rank()), index=$(cpm 2020-09-01).index)"
 cat owid-covid-data.csv \
     | grep -E "$COUNTRIES" \
     | $P9 -g segment \
-             mapping.x=1 .xend=2 .y="$M_Y1" .yend="$M_Y2" .color=location \
-          -g text mapping.x=1 .y="$M_Y1" .label=location \
+             mapping.x=1 .xend=2 .y=:"$M_Y1" .yend=:"$M_Y2" .color=location \
+          -g text mapping.x=1 .y=:"$M_Y1" .label=location \
              ha=right nudge-x=-0.05 size=9 \
-          -g text mapping.x=2 .y="$M_Y2" .label=location \
+          -g text mapping.x=2 .y=:"$M_Y2" .label=location \
              ha=left nudge-x=0.05 size=9 \
-          -g point mapping.x=1 .y="$M_Y1" \
-          -g point mapping.x=2 .y="$M_Y2" \
+          -g point mapping.x=1 .y=:"$M_Y1" \
+          -g point mapping.x=2 .y=:"$M_Y2" \
           --ann text x=0.8 y=12.5 label='Rank 01-Sep-2020' size=8 \
           --ann text x=2.2 y=12.5 label='Rank 15-Mar-2021' size=8 \
           --scale x-continuous min=0.25 max=2.75 \
