@@ -253,11 +253,6 @@ def parse_kwargs(kwargs):
             raise ValueError(f'bad key: "{key}"')
 
     def parse_val(v):
-        num = r'([+-]?(?:\d*(?:\.\d+)?))'
-        ws = r'\s*'
-        op = r'\.\.(\^?)'
-        range_regex = f'^{ws}{num}{ws}(?:,{ws}{num})?{ws}{op}{ws}{num}{ws}$'
-
         if v.startswith(':'):
             return v[1:]
         elif (range_val := parse_range(v)) is not None:
