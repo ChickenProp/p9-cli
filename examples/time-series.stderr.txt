@@ -1,4 +1,4 @@
-p9.ggplot(<data>, x='date', y='total_cases_per_million', color='location')
+p9.ggplot(<data>, p9.aes(x='date', y='total_cases_per_million', color='location'))
   + p9.geom_line()
   + p9.scale_color_brewer(type='qual', palette='Paired')
   + p9.scale_x_datetime(date_breaks='3 months')

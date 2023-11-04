@@ -168,9 +168,9 @@ def build_plot(args):
     mapping_args = parse_kwargs(args.mapping)
     mapping = p9.aes(**mapping_args)
 
-    # If `mapping_args` is empty, this is just `p9.ggplot(<data>, )`. But that's
-    # actually valid syntax, so it's fine.
-    debug_print(f"p9.ggplot(<data>, {format_arglist([], mapping_args)})")
+    debug_print(
+        f"p9.ggplot(<data>, p9.aes({format_arglist([], mapping_args)}))"
+    )
 
     plot = p9.ggplot(data, mapping)
 

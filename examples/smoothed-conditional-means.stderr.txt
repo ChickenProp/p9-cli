@@ -1,4 +1,4 @@
-p9.ggplot(<data>, x='displ', y='hwy', color='drv')
+p9.ggplot(<data>, p9.aes(x='displ', y='hwy', color='drv'))
   + p9.geom_point()
   + p9.stat_smooth(method='lm')
   + p9.scale_color_hue(name='drive')

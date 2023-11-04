@@ -1,4 +1,4 @@
-p9.ggplot(<data>, )
+p9.ggplot(<data>, p9.aes())
   + p9.geom_segment(mapping={'x': 1, 'xend': 2, 'y': 'total_cases_per_million[date=="2020-09-01"].rank()', 'yend': 'pd.Series(list(total_cases_per_million[date=="2021-03-15"].rank()), index=total_cases_per_million[date=="2020-09-01"].index)', 'color': 'location'})
   + p9.geom_text(mapping={'x': 1, 'y': 'total_cases_per_million[date=="2020-09-01"].rank()', 'label': 'location'}, ha='right', nudge_x=-0.05, size=9)
   + p9.geom_text(mapping={'x': 2, 'y': 'pd.Series(list(total_cases_per_million[date=="2021-03-15"].rank()), index=total_cases_per_million[date=="2020-09-01"].index)', 'label': 'location'}, ha='left', nudge_x=0.05, size=9)

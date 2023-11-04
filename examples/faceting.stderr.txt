@@ -1,3 +1,3 @@
-p9.ggplot(<data>, x='mpg', y='wt')
+p9.ggplot(<data>, p9.aes(x='mpg', y='wt'))
   + p9.facet_grid(facets='cyl ~ gear')
   + p9.geom_point()
