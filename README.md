@@ -73,16 +73,22 @@ There's support, at least on some level, for geoms (`-g`, `--geom`), stats (`-s`
 
 The general model is that you pass aesthetic mappings in the form `key=value` and add plot elements with the optional arguments. For `--geom`, `--stat`, `--scale` and `--facet`, you specify a name and keyword parameters in the form `key=value`. The name (with `-` replaced with `_`) is looked up in the relevant part of the plotnine API, the keyword parameters are passed to it, and that's added to the plot. So `-g point size=0.2` is the same as adding `geom_point(size=0.2)` if you were writing Python. `--scale x-date` is `scale_x_date()`. `--ann` is similar, except the name and args are passed directly to `plotnine.annotate`.
 
-When parsing keyword parameters, including aesthetic mappings, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation. You can insert into a dict by appending `.key` to the key, or a list by appending `,`, and then you can leave off the name beforehand in future. So
+When parsing keyword parameters, including aesthetic mappings, any `-` in keys are replaced with `_`. Ints are interpreted as ints, floats as floats. `y`, `n`, `-` are interpreted as `True`, `False`, `None`. A leading `:` is dropped and forces string interpretation.
+
+You can insert into a dict by appending `.key` to the key, or a list by appending `,` (for single elements) or `+` (for multiple elements separated by commas), and then you can leave off the name beforehand in future. So
 
 ```
-a=3 b=4.5 dict-val.dict-key1=y .dict-key2=:n .dict-key3=- list-val,=foo ,=bar
+a=3 b=4.5
+  dict-val.dict-key1=y .dict-key2=:n .dict-key3=-
+  list-val,=foo ,=bar +=baz,quux
 ==> { 'a': 3,
       'b': 4.5,
       'dict_val': {'dict_key1': True, 'dict_key2': 'n', 'dict_key3': None},
-      'list_val': ['foo', 'bar']
+      'list_val': ['foo', 'bar', 'baz', 'quux']
     }
 ```
+
+There's currently no support for lists or dicts containing lists or dicts.
 
 Plotnine has a number of built-in configurable themes, which you can select with `--theme name key=val ...`. You can also override specific parts of the theme by not providing a name, like `--theme key=val ...`.
 

@@ -174,7 +174,7 @@ def parse_scale_kwargs(kwargs):
     return kwargs
 
 def parse_kwargs(kwargs):
-    """Parse a list of `key=val` strings into a dictionary.
+    """Parse a list of `key=val` strings into a string-keyed dictionary.
 
     Supports values being strings, ints, floats, bools. Also lists and
     string-keyed dicts containing those types. Does not (yet?) support lists or
@@ -183,20 +183,14 @@ def parse_kwargs(kwargs):
     >>> # Simple values
     >>> parse_kwargs(["a=b"])
     {'a': 'b'}
-    >>> parse_kwargs(["a=3"])
-    {'a': 3}
-    >>> parse_kwargs(["a=:3"])
-    {'a': '3'}
-    >>> parse_kwargs(["a=y"])
-    {'a': True}
-    >>> parse_kwargs(["a=:y"])
-    {'a': 'y'}
-    >>> parse_kwargs(["a=:"])
-    {'a': ''}
-    >>> parse_kwargs(["a="])
-    {'a': ''}
-    >>> parse_kwargs(["a=::"])
-    {'a': ':'}
+    >>> parse_kwargs(["a=3", "b=:3"])
+    {'a': 3, 'b': '3'}
+    >>> parse_kwargs(["a=y", "b=n", "c=-"])
+    {'a': True, 'b': False, 'c': None}
+    >>> parse_kwargs(["a=:y", "b=:n", "c=:-"])
+    {'a': 'y', 'b': 'n', 'c': '-'}
+    >>> parse_kwargs(["a=:", "b=", "c=::"])
+    {'a': '', 'b': '', 'c': ':'}
     >>> parse_kwargs(["a-b=3"])
     {'a_b': 3}
     >>> parse_kwargs(["a-b-2=3"])
@@ -212,11 +206,13 @@ def parse_kwargs(kwargs):
     >>> parse_kwargs(["a=3", ",=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: No previous base at ",=foo"
+    ValueError: No previous base at ',=foo'
     >>> parse_kwargs(["a.x=3", ",=foo"])
     Traceback (most recent call last):
         ...
     ValueError: Key "a" already contains non-list
+    >>> parse_kwargs(["a+=1,2,3", ",=4", "+=5,6"])
+    {'a': [1, 2, 3, 4, 5, 6]}
 
     >>> # Dicts
     >>> parse_kwargs(["a.x=3"])
@@ -228,7 +224,7 @@ def parse_kwargs(kwargs):
     >>> parse_kwargs(["a=3", ".y=foo"])
     Traceback (most recent call last):
         ...
-    ValueError: No previous base at ".y=foo"
+    ValueError: No previous base at '.y=foo'
     >>> parse_kwargs(["a,=3", ".y=foo"])
     Traceback (most recent call last):
         ...
@@ -245,17 +241,27 @@ def parse_kwargs(kwargs):
             return ('dict-key', match.group(1), match.group(2))
         elif match := re.match(r'^\.(\w+)$', key):
             return ('implicit-dict-key', match.group(1))
-        elif match := re.match(r'^(\w+)\,$', key):
+        elif match := re.match(r'^(\w+),$', key):
             return ('list-append', match.group(1))
         elif key == ',':
             return ('implicit-list-append',)
+        elif match := re.match(r'^(\w+)\+$', key):
+            return ('list-extend', match.group(1))
+        elif key == '+':
+            return ('implicit-list-extend',)
         else:
             raise ValueError(f'bad key: "{key}"')
 
     def parse_val(v):
         if v.startswith(':'):
             return v[1:]
-        elif (v == '-'):
+        elif ',' in v:
+            return [parse_simple_val(x) for x in v.split(',')]
+        else:
+            return parse_simple_val(v)
+
+    def parse_simple_val(v):
+        if (v == '-'):
             return None
         elif (v == 'y'):
             return True
@@ -282,11 +288,34 @@ def parse_kwargs(kwargs):
                 raise ValueError(f'Key "{base}" already contains non-dict')
             context[sub] = val
 
-        def set_list(base):
+        def append_list(base):
             context = ret.setdefault(base, [])
             if not isinstance(context, list):
                 raise ValueError(f'Key "{base}" already contains non-list')
             context.append(val)
+
+        def extend_list(base):
+            context = ret.setdefault(base, [])
+            if not isinstance(context, list):
+                raise ValueError(f'Key "{base}" already contains non-list')
+            context.extend(val)
+
+        # We could be lenient here. E.g. we could allow
+        #
+        #     a=1,2,3 a+=4
+        #       ==> {"a": [1,2,3,4]}
+        #
+        # But I want to extend to being able to create more complicted
+        # structures, and then edge case behavior might want to change. So being
+        # strict for now.
+        if key[0] in ('list-extend', 'implicit-list-extend'):
+            if not isinstance(val, list):
+                raise ValueError(
+                    '+= requires a list-typed value. You may want ,= instead'
+                )
+        else:
+            if isinstance(val, list):
+                raise ValueError('List-typed values may only be used with +=')
 
         match key:
             case ('plain-key', name):
@@ -298,21 +327,30 @@ def parse_kwargs(kwargs):
                 implicit_base = key[1]
 
             case ('list-append', name):
-                set_list(name)
+                append_list(name)
+                implicit_base = name
+
+            case ('list-extend', name):
+                extend_list(name)
                 implicit_base = name
 
             case ('implicit-dict-key', inner):
                 if implicit_base is None:
-                    raise ValueError(f'No previous base at "{arg}"')
+                    raise ValueError(f'No previous base at {arg!r}')
                 set_dict(implicit_base, inner)
 
             case ('implicit-list-append',):
                 if implicit_base is None:
-                    raise ValueError(f'No previous base at "{arg}"')
-                set_list(implicit_base)
+                    raise ValueError(f'No previous base at {arg!r}')
+                append_list(implicit_base)
+
+            case ('implicit-list-extend',):
+                if implicit_base is None:
+                    raise ValueError(f'No previous base at {arg!r}')
+                extend_list(implicit_base)
 
             case _:
-                raise RuntimeError('Bad parsed key')
+                raise RuntimeError(f'Bad parsed key: {key} at {arg!r}')
 
     return ret
 
