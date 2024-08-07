@@ -1,2 +1,13 @@
+[project]
+name = "p9-cli"
+version = "1.0"
+dependencies = [
+  "plotnine",
+  "PyQt5"
+]
+
+[project.scripts]
+p9 = "p9:main"
+
 [tool.black]
 line-length = 80

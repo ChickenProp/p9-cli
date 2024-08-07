@@ -101,7 +101,18 @@ There's currently no support for lists or dicts containing lists or dicts.
 
 Plotnine has a number of built-in configurable themes, which you can select with `--theme name key=val ...`. You can also override specific parts of the theme by not providing a name, like `--theme key=val ...`.
 
-Here are some things it lacks:
+To install, I use [`pipx`](https://pipx.pypa.io/stable/). It installs to an isolated environment in your home folder, and then adds a symlink to the executable from (in my case) `~/.local/bin`. Either of these should work:
+
+```bash
+pipx install 'git+https://github.com/ChickenProp/p9-cli.git'
+
+git clone https://github.com/ChickenProp/p9-cli.git
+pipx install ./p9-cli
+```
+
+Or you can maybe just run the `p9` executable directly, if you have `plotnine` and dependencies installed in your python environment.
+
+Here are some things `p9-cli` lacks:
 
 * There's no way to pass a dataset to a specific layer.
 
