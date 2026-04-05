@@ -3,6 +3,15 @@
 cd "$(dirname "$0")"
 P9=../p9
 
+# Warnings include the path of the file that emitted them. This removes the
+# parts of the path likely to be environment-dependant. But they still include
+# exact line numbers, which are likely to change between dependency versions.
+# Most examples don't have warnings, we currently only use this on the one that
+# does.
+clean-up-paths() {
+    sed -E 's!^/.+?/site-packages/!.../site-packages/!'
+}
+
 # Stacked bar plot with counts, similar to
 # https://plotnine.readthedocs.io/en/stable/tutorials/miscellaneous-show-counts-on-a-stacked-bar-plot.html
 # The counts have overlapping labels, which is a shame. position=dodge might
@@ -30,7 +39,7 @@ $P9 --dataset mpg x=displ y=hwy color=drv \
 # https://www.r-graph-gallery.com/223-faceting-with-ggplot2.html
 
 $P9 --dataset mtcars x=mpg y=wt \
-    -f grid facets='cyl ~ gear' \
+    -f grid rows=cyl cols=gear \
     -o faceting.png \
     --debug 2> faceting.stderr.txt
 
@@ -92,10 +101,10 @@ cat owid-covid-data.csv \
           --ann text x=0.8 y=12.5 label='Rank 01-Sep-2020' size=8 \
           --ann text x=2.2 y=12.5 label='Rank 15-Mar-2021' size=8 \
           --scale x-continuous min=0.25 max=2.75 \
-          --scale color-brewer type=qual palette=Paired guide=n \
+          --scale color-brewer type=qual palette=Paired guide=- \
           -t void \
           -t figure_size,=4.3 ,=6 \
           --title 'Ranked confirmed covid cases per million' \
           --csv 'dtype.date=datetime64[ns]' \
           -o change-in-rank.png verbose=y \
-          --debug 2> change-in-rank.stderr.txt
+          --debug 2> >(clean-up-paths > change-in-rank.stderr.txt)
