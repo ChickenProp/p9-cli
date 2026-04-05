@@ -16,9 +16,7 @@ def main():
     plot = build_plot(args)
 
     if args.output is None:
-        # In current plotnine, `(...).draw(show=True)` will work for this. But
-        # no need to lose backwards compatibility.
-        str(plot)
+        plot.show()
     else:
         save_args = {"verbose": False, **parse_kwargs(args.output[1:])}
         plot.save(args.output[0], **save_args)
